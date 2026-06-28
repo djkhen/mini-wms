@@ -1,0 +1,40 @@
+# ════════════════════════════════════════════════════════════════════
+#  CONFIDENTIALITÉ — NE JAMAIS VERSIONNER LE CODE/LES DONNÉES LEGACY
+#  Le code PHP source (appli héritée de l'employeur) reste local,
+#  en lecture seule, comme simple référence de reverse-engineering.
+#  On reconstruit le CONCEPT/MODÈLE — jamais le code ni les données.
+# ════════════════════════════════════════════════════════════════════
+/_legacy/
+
+# ── Données / secrets ────────────────────────────────────────────────
+*.sql
+*.dump
+.env
+.env.*
+!.env.example
+
+# ── Java / Quarkus ───────────────────────────────────────────────────
+target/
+.mvn/wrapper/maven-wrapper.jar
+*.class
+
+# ── Flutter / Dart ───────────────────────────────────────────────────
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+
+# ── Angular / Node (plus tard) ───────────────────────────────────────
+node_modules/
+dist/
+.angular/
+
+# ── IDE / OS ─────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
