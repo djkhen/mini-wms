@@ -29,6 +29,26 @@ repo. Dumps SQL = lecture **structure** uniquement.
 **Décision en attente** : quelle(s) appli(s) pilote(nt) le mini-WMS générique, et
 que fait-on de la migration Quarkus déjà commencée dans TRACK.
 
+## 2026-06-28 — Reverse FLUX + TRACK terminé → analyse consignée
+
+Reverse-engineering des deux apps fait (lecture seule, anonymisé). Synthèse complète
+dans [legacy-analysis.md](legacy-analysis.md). Points saillants :
+
+- **TRACK = WMS physique complet** (entrepôts/emplacements/stock/mouvements + récep.
+  → items → colisage → caisses → expédition → transport), multi-tenant, facturation
+  UO. **Aucun code Java** : la « migration » est un refactor PHP (Service/Manager +
+  embryon d'API REST mobile). Notre schéma proposé est validé et enrichi par TRACK.
+- **FLUX = couche demandes/workflow** : ~13 tables clonées (aléa, sortie matière,
+  réappro, transfert, tri qualité, inventaire, anomalie récep., mise en conformité…)
+  avec tronc commun + machine à états ; stock réel délégué à un ERP externe.
+- **Synthèse cible** : `Demande` générique (FLUX) qui génère des `Mouvement`
+  physiques (TRACK), sur socle Article/Emplacement/Stock.
+- 🔴 **Sécurité** : FLUX versionnait des secrets de prod en clair → signalé à
+  l'utilisateur (hors de notre repo, gitignoré).
+
+**Décisions de périmètre à trancher avant de coder** : positionnement (socle
+physique seul / + couche workflow), multi-tenant oui/non, frontière du MVP.
+
 ## 2026-06-28 — Initialisation du repo
 
 - Création du repo `mini-wms` (dossier voisin de `mini-projet`).
