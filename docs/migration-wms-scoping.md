@@ -98,8 +98,10 @@ l'employeur. Le PHP source reste dans `_legacy/` (gitignoré).
   **+ couche workflow `Demande`** (façon FLUX). Cf. [legacy-analysis.md](legacy-analysis.md).
 - **Tenant** : **single-tenant**, mais entités conçues pour évoluer (on pourra
   ajouter un filtre tenant Hibernate plus tard sans tout refaire).
-- **Stack** : Quarkus 3.17.5 / Java 21 / Hibernate Panache / PostgreSQL 16 / OpenAPI
-  (alignée sur le mini-projet pédagogique). Package `com.example.wms`.
+- **Stack & conventions** : Quarkus 3.17.5 / Java 21 / Hibernate Panache /
+  PostgreSQL 16 / OpenAPI, **alignées sur gestion-stock (gs)** : package
+  `com.example`, validation manuelle (422/409/404), `Logger` JBoss, un seul
+  backend sur 8080. Cf. `NOTES-DEV.md`.
 
 ## 8. Modèle complet cible (v2)
 

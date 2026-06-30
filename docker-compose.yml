@@ -1,0 +1,51 @@
+# ===========================================================================
+#  Orchestration mini-WMS
+#    - db      : PostgreSQL (base de données)
+#    - backend : API Quarkus
+#
+#  Le front (Flutter / Angular) viendra plus tard.
+#
+#  Lancer :        docker compose up --build
+#  Arrêter :       docker compose down
+#  Réinitialiser : docker compose down -v   (efface la base)
+#
+#  ⚠️ UN SEUL backend sur 8080 à la fois : couper gs/mp avant (docker compose
+#  down). La base est sur un port hôte distinct (5435) pour cohabiter avec les
+#  bases gs (5433) et mp (5434) côté outil GUI.
+# ===========================================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: wms-db
+    environment:
+      POSTGRES_DB: wmsdb
+      POSTGRES_USER: wms
+      POSTGRES_PASSWORD: wms
+    ports:
+      - "5435:5432"
+    volumes:
+      - wms-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U wms -d wmsdb" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: wms-backend
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/wmsdb
+      DB_USER: wms
+      DB_PASSWORD: wms
+      CORS_ORIGINS: http://localhost:4200,http://localhost:8090,http://localhost:5000,http://localhost:5001
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      # Exposé sur l'hôte pour le mobile Flutter (http://10.0.2.2:8080 émulateur).
+      - "8080:8080"
+
+volumes:
+  wms-db-data:
