@@ -92,7 +92,57 @@ l'employeur. Le PHP source reste dans `_legacy/` (gitignoré).
 > Pistes à généraliser si besoin (sans rien révéler) : n° de lot / n° de série,
 > client-propriétaire de la pièce, date de péremption.
 
-## 7. Prochaine étape
+## 7. Décisions figées (2026-06-28, après reverse FLUX + TRACK)
 
-Comparer ce schéma avec celui de l'ancienne appli (`_legacy/`), garder le meilleur
-des deux, puis coder la **1re entité : `Emplacement`** (le cœur du WMS).
+- **Positionnement** : modèle **le plus complet** = **socle physique** (façon TRACK)
+  **+ couche workflow `Demande`** (façon FLUX). Cf. [legacy-analysis.md](legacy-analysis.md).
+- **Tenant** : **single-tenant**, mais entités conçues pour évoluer (on pourra
+  ajouter un filtre tenant Hibernate plus tard sans tout refaire).
+- **Stack** : Quarkus 3.17.5 / Java 21 / Hibernate Panache / PostgreSQL 16 / OpenAPI
+  (alignée sur le mini-projet pédagogique). Package `com.example.wms`.
+
+## 8. Modèle complet cible (v2)
+
+### Socle physique
+- **Article** : `reference` (unique), `designation`, `unite` (enum), `actif`.
+- **Emplacement** ⭐ : `code` (unique, ex "A-01-03-2"), `libelle`, `zone`,
+  `type` (enum), **adressage fin** `allee`/`travee`/`niveau`/`position`, `actif`.
+- **Stock** : `@ManyToOne Article`, `@ManyToOne Emplacement`, `quantite`,
+  `seuilReappro` — **UNIQUE(article, emplacement)**.
+- **Mouvement** ⭐ : `@ManyToOne Article`, `@ManyToOne emplacementSource` (null),
+  `@ManyToOne emplacementDestination` (null), `type` (enum), `quantite`, `date`,
+  `motif`, `@ManyToOne demande` (null → lien vers la demande à l'origine).
+- **Fournisseur** : `code`, `nom`, `actif`.
+- **Reception** : `@ManyToOne Fournisseur`, `reference` (BL), `dateReception`,
+  `statut` (enum) + **LigneReception** : `@ManyToOne Reception`,
+  `@ManyToOne Article`, `quantiteAttendue`, `quantiteRecue`.
+
+### Couche workflow (Demande)
+- **Demande** : `type` (enum TypeFlux), `@ManyToOne Article` (null), `quantite`,
+  `zone`/`@ManyToOne Emplacement` (null), `demandeur`, `statut` (enum, machine à
+  états), `priorite`, `commentaire`, `commentaireTraitant`, **jalons datés**
+  (`dateDemande`, `datePreparation`, `dateLivraison`, `dateBlocage`). Génère des
+  `Mouvement`. → unifie les ~13 tables clonées de FLUX en **une** entité typée.
+- (Plus tard) **Utilisateur** / **Profil** pour l'auth et le `demandeur`.
+
+### Enums
+- `UniteMesure` : PIECE, KG, METRE, LITRE, BOITE…
+- `TypeEmplacement` : RECEPTION, STOCKAGE, EXPEDITION, QUAI, TRI.
+- `TypeMouvement` : RECEPTION, RANGEMENT, TRANSFERT, PREPARATION, EXPEDITION,
+  AJUSTEMENT, INVENTAIRE, REBUT.
+- `StatutReception` : ATTENDUE, EN_COURS, TERMINEE, ANNULEE.
+- `TypeFlux` : REAPPRO_URGENT, TRANSFERT, SORTIE_MATIERE, INVENTAIRE,
+  ANOMALIE_RECEPTION, TRI_QUALITE, RETOUR_TRI, MISE_EN_CONFORMITE, FLUX_DIRECT.
+- `StatutDemande` : ENVOYEE, RECUE, PREPAREE, LIVREE, BLOQUEE, ANNULEE, CLOTUREE.
+
+## 9. Ordre de construction (branche par branche, labo → solo)
+
+1. **`feature/backend-emplacement`** — scaffolding Quarkus + entité **Emplacement**
+   (cœur WMS) + REST + seed. ← *on commence ici*
+2. `feature/article` — Article + REST.
+3. `feature/stock` — Stock (relation Article × Emplacement, contrainte unique).
+4. `feature/mouvement` — Mouvement (journal source/dest + enum).
+5. `feature/reception` — Fournisseur + Reception + LigneReception.
+6. `feature/demande` — couche workflow Demande (machine à états) + lien Mouvement.
+7. *Plus tard* : Utilisateur/Profil + auth, colisage/expédition, multi-tenant,
+   front Flutter/Angular.
