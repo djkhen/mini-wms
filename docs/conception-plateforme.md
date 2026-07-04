@@ -89,6 +89,12 @@ c'est fait » (⬆️ ascendante). Le **n° de lot** est l'identifiant qui trave
 
 ## 8. Architecture technique
 - **Stack** : Quarkus 3.33 + Panache + PostgreSQL + Angular/Flutter + Docker + Keycloak (auth).
+- **Build backend : Maven** (cohérence avec les autres repos ; Gradle réservé au boulot — cf. MEMO-CODE §6).
+- **Client HTTP Flutter : Dio** (décidé 2026-07-04) — raisons : **intercepteurs** (indispensables pour le
+  token Keycloak + refresh), timeout/retry natifs, et **c'est le choix du boulot (GCA)** → chaque usage
+  compte double. `http` reste OK pour gs (fini) ; Chopper écarté (codegen = friction).
+- **API : DTO systématiques** (records Java) — jamais d'entités brutes exposées (pattern validé dans gs,
+  cf. refactor commandes du 2026-07-04 : contrat JSON explicite + supprime les pièges lazy-loading).
 
 ### Organisation des services (décidée le 2026-07-04)
 **3 microservices seulement** au départ :
