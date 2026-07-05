@@ -8,6 +8,7 @@
 
 # ── Données / secrets ────────────────────────────────────────────────
 *.sql
+!backend/src/main/resources/db/**/*.sql
 *.dump
 .env
 .env.*
@@ -20,6 +21,7 @@ target/
 
 # ── Flutter / Dart ───────────────────────────────────────────────────
 .dart_tool/
+.gradle/
 build/
 .flutter-plugins
 .flutter-plugins-dependencies

@@ -3,11 +3,14 @@
 Mémo pratique du projet (migration legacy → Quarkus + Flutter) : décisions,
 architecture, pièges. À lire en premier quand on (re)prend le projet.
 
-> 🧭 **Repère d'univers** : **wms = mini-WMS = EMPLACEMENTS + FLUX d'entrepôt**
-> (endpoint `/emplacements`). Projet **brownfield** (migration). À distinguer de
-> **gs = gestion-stock = ARTICLES 📦** (greenfield) et **mp = mini-projet** (labo).
-> Stack et conventions **alignées sur gs** (package `com.example`, validation
-> manuelle → 422, `Logger`, un seul backend sur 8080).
+> 🧭 **Repère d'univers** : **wms = LA PLATEFORME (nom de travail Fluxo)** = flux/WMS
+> + GPAO + IA (endpoint `/emplacements` pour l'instant). À distinguer de
+> **gs = gestion-stock = ARTICLES 📦** (fini, vitrine) et **mp = mini-projet** (labo).
+> ⚠️ Depuis le 2026-07-05, stack **alignée sur LE BOULOT** (règle d'alignement, cf.
+> `docs/conception-plateforme.md` §8) : **Gradle 9.3.1 · Quarkus 3.33 LTS · Liquibase
+> · packages `com.fluxo.*` · artifact `core-metier`** (les entrées plus anciennes
+> ci-dessous qui parlent de Maven/`com.example`/3.17.5 sont HISTORIQUES).
+> Toujours : un seul backend sur 8080 (couper gs/mp avant), base hôte 5435.
 
 Notes chronologiques (décisions, blocages, idées). Le plus récent en haut.
 
@@ -17,6 +20,55 @@ Notes chronologiques (décisions, blocages, idées). Le plus récent en haut.
 > local gitignoré `_legacy/SOURCES.md`.
 
 ---
+
+## 2026-07-05 — ⭐ RECETTE LIQUIBASE (mise en place + usage quotidien)
+
+**Pourquoi** : `hibernate-orm.database.generation=update` laissait Hibernate modifier
+le schéma tout seul → interdit chez un client (non tracé, non reproductible). Avec
+Liquibase, **le schéma est du code versionné** : des fichiers SQL numérotés, joués
+dans l'ordre, tracés dans la table `DATABASECHANGELOG` de la base.
+
+### Mise en place (faite une fois — les 4 pas)
+1. **Dépendance** — `build.gradle`, bloc `dependencies { }` :
+   `implementation 'io.quarkus:quarkus-liquibase'`
+   ⚠️ TOUJOURS dans `build.gradle` (jamais `settings.gradle` = identité/plugins).
+2. **Config** — `application.properties` :
+   `quarkus.liquibase.migrate-at-start=true` (joue les migrations au boot)
+   `quarkus.hibernate-orm.database.generation=validate` (Hibernate ne fait plus que VÉRIFIER)
+3. **Registre maître** — `resources/db/changeLog.xml` : la table des matières, un
+   `<include file="db/changes/NNN-xxx.sql"/>` par évolution, dans l'ordre.
+4. **Changesets** — `resources/db/changes/NNN-description.sql` en **SQL formaté** :
+   ```
+   --liquibase formatted sql
+
+   --changeset dk:NNN-description
+   ...SQL...
+   --rollback ...comment annuler...
+   ```
+   Les lignes `--liquibase` et `--changeset auteur:id` sont de la SYNTAXE, pas des
+   commentaires. Un changeset n'est JAMAIS rejoué (ni modifié après coup !).
+
+### Usage quotidien (chaque évolution de schéma)
+1. Nouveau fichier `db/changes/002-creation-article.sql` (numéro suivant) ;
+2. L'ajouter au `changeLog.xml` (`<include ...>`) ;
+3. Redémarrer → Liquibase joue ce qui manque. Log attendu :
+   `ChangeSet db/changes/002-...::dk ran successfully`.
+
+### Pièges appris
+- **JAMAIS modifier un changeset déjà joué** (checksum → erreur au boot) : on écrit
+  un NOUVEAU fichier qui corrige (ALTER...). L'historique est immuable, comme git.
+- La séquence `xxx_SEQ INCREMENT BY 50` = convention Hibernate 6 pour les id Panache.
+- Reset complet en dev : `docker compose down -v` (efface la base, le seed repeuple).
+- 🚨 **Le `.gitignore` du repo contient `*.sql`** (protection anti-dumps legacy) →
+  les migrations étaient INVISIBLES pour git (ni trackées ni signalées !). Fix :
+  exception `!backend/src/main/resources/db/**/*.sql` juste sous la règle `*.sql`.
+  Réflexe : après création d'un fichier, vérifier qu'il apparaît dans `git status`.
+- Montée 3.17→3.33 : des propriétés ont été RENOMMÉES —
+  `quarkus.http.cors=true` → `quarkus.http.cors.enabled=true` (l'ancienne était
+  silencieusement IGNORÉE = CORS mort !) ; `quarkus.hibernate-orm.database.generation`
+  → `quarkus.hibernate-orm.schema-management.strategy`. Toujours lire les WARN au boot.
+- Le **wrapper Gradle** (`gradlew`, `gradlew.bat`, `gradle/`) SE VERSIONNE (standard) ;
+  les caches `.gradle/` et `build/` s'ignorent.
 
 ## 2026-06-28 — Réception des sources legacy (4 applis)
 

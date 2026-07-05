@@ -93,9 +93,15 @@ c'est fait » (⬆️ ascendante). Le **n° de lot** est l'identifiant qui trave
   veut s'aligner sur l'outillage de son travail (même argument « compter double » que Dio). Gradle 9.3.1 =
   version officiellement recommandée pour Quarkus 3.33 ; Quarkus épinglé en **3.33.2.1** (dernière
   maintenance LTS). Syntaxe Maven↔Gradle : MEMO-CODE §6. (gs et mp restent en Maven.)
-- **Client HTTP Flutter : Dio** (décidé 2026-07-04) — raisons : **intercepteurs** (indispensables pour le
-  token Keycloak + refresh), timeout/retry natifs, et **c'est le choix du boulot (GCA)** → chaque usage
-  compte double. `http` reste OK pour gs (fini) ; Chopper écarté (codegen = friction).
+- **📐 RÈGLE D'ALIGNEMENT (2026-07-05)** : à outils équivalents, la plateforme prend **celui du boulot
+  (GCA)** — chaque heure de pratique compte double (perso + pro).
+- **Client HTTP Flutter : CHOPPER** (⚠️ décision CHANGÉE le 2026-07-05 — remplace Dio) : le boulot a
+  basculé sur Chopper → règle d'alignement. Style Retrofit (annotations + build_runner). Intercepteurs
+  pour Keycloak disponibles aussi. `http` reste OK pour gs (fini).
+- **Migrations de schéma : LIQUIBASE** (décidé 2026-07-05, à confirmer vs le boulot — mot entendu au
+  travail) : changelogs versionnés (master XML + changesets en SQL formaté), rollbacks déclarés,
+  `quarkus-liquibase`. Hibernate passe en `validate` (ne touche plus au schéma). Le standard entreprise
+  (vs Flyway plus minimaliste).
 - **API : DTO systématiques** (records Java) — jamais d'entités brutes exposées (pattern validé dans gs,
   cf. refactor commandes du 2026-07-04 : contrat JSON explicite + supprime les pièges lazy-loading).
 
@@ -151,6 +157,20 @@ l'autre en direct) → un module peut être **sorti en vrai microservice plus ta
 - **Mobile atelier/logistique** — **scan** + saisie terrain → place naturelle pour les compétences **Flutter** (relie la certif au projet).
 - **Migration des données legacy** — catalogue, tarifs, historique depuis Uniface/SQL Server (souvent le plus gros chantier réel).
 - **Reporting / KPI** — OTD (respect délais), **taux de charge des postes**, retards, valorisation stock.
+
+**🧩 Champs personnalisés par client** (besoin vu au boulot de l'utilisateur, 2026-07-05) : une plateforme
+installée chez des clients finit toujours par devoir accepter des **champs optionnels définis par le
+client** (ex. « n° de four » sur Article chez X, « code douane » chez Y). Réponse retenue : **colonne JSONB**
+(`attributs_personnalises`) sur les entités concernées — flexible SANS sacrifier ACID/jointures (pas besoin
+de Mongo). Côté mobile : Chopper + convertisseurs manuels gèrent bien ces champs dynamiques (c'est
+précisément pour ça que le boulot a quitté le codegen OpenAPI : `additionalProperties` mal généré).
+
+**🧩 Visibilité des champs configurable par client** (idée utilisateur, 2026-07-05 — depuis le marché 😄) :
+écrans **pilotés par configuration** — une table `ConfigurationChamp` (entité, champ, **visible**,
+obligatoire, libellé personnalisé) par installation/client ; le front construit ses formulaires en la
+lisant. Se marie avec les champs JSONB (la même table déclare les champs custom) et avec la cascade
+global→site→rôle (comme les tarifs du legacy). Dosage : v1 = drapeaux visible/obligatoire sur les champs
+standards ; v2 = dictionnaire complet de champs dynamiques.
 
 **🚫 Délégué (NE pas construire)** — **Facturation** → reste dans **Sage X3** (juste l'interface).
 

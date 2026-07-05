@@ -32,6 +32,9 @@ dependencies {
     // Tests
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'io.rest-assured:rest-assured'
+
+    // Migrations de schema versionnees (changelogs Liquibase)
+    implementation 'io.quarkus:quarkus-liquibase'
 }
 
 group = 'com.fluxo'
