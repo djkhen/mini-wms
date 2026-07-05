@@ -93,11 +93,14 @@ c'est fait » (⬆️ ascendante). Le **n° de lot** est l'identifiant qui trave
   veut s'aligner sur l'outillage de son travail (même argument « compter double » que Dio). Gradle 9.3.1 =
   version officiellement recommandée pour Quarkus 3.33 ; Quarkus épinglé en **3.33.2.1** (dernière
   maintenance LTS). Syntaxe Maven↔Gradle : MEMO-CODE §6. (gs et mp restent en Maven.)
-- **📐 RÈGLE D'ALIGNEMENT (2026-07-05)** : à outils équivalents, la plateforme prend **celui du boulot
-  (GCA)** — chaque heure de pratique compte double (perso + pro).
-- **Client HTTP Flutter : CHOPPER** (⚠️ décision CHANGÉE le 2026-07-05 — remplace Dio) : le boulot a
-  basculé sur Chopper → règle d'alignement. Style Retrofit (annotations + build_runner). Intercepteurs
-  pour Keycloak disponibles aussi. `http` reste OK pour gs (fini).
+- **📐 RÈGLE D'ALIGNEMENT (2026-07-05, affinée le soir)** : la plateforme prend l'outil du boulot (GCA)
+  quand ça **comble un manque** (ce que le boulot ne me fait PAS pratiquer moi-même : Gradle, Liquibase).
+  Quand je pratique déjà l'outil au boulot au quotidien → la maison prend **le standard communautaire**
+  (couvrir les deux > doubler le même).
+- **Client HTTP Flutter : DIO** (décision FINALE 2026-07-05, après aller-retour Dio→Chopper→Dio) :
+  je pratique déjà Chopper tous les jours au boulot → Dio à la maison = je couvre les deux ; Dio = standard
+  communautaire (code vitrine lisible par tout dev), zéro friction build_runner, intercepteurs Keycloak OK.
+  Révisable au moment d'attaquer le mobile (loin). `http` reste OK pour gs (fini).
 - **Migrations de schéma : LIQUIBASE** (décidé 2026-07-05, à confirmer vs le boulot — mot entendu au
   travail) : changelogs versionnés (master XML + changesets en SQL formaté), rollbacks déclarés,
   `quarkus-liquibase`. Hibernate passe en `validate` (ne touche plus au schéma). Le standard entreprise
