@@ -1,4 +1,4 @@
-package com.example;
+package com.fluxo.flux.domain;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Column;

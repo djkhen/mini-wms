@@ -89,7 +89,10 @@ c'est fait » (⬆️ ascendante). Le **n° de lot** est l'identifiant qui trave
 
 ## 8. Architecture technique
 - **Stack** : Quarkus 3.33 + Panache + PostgreSQL + Angular/Flutter + Docker + Keycloak (auth).
-- **Build backend : Maven** (cohérence avec les autres repos ; Gradle réservé au boulot — cf. MEMO-CODE §6).
+- **Build backend : GRADLE 9.3.1** (⚠️ décision CHANGÉE le 2026-07-05 — remplace Maven) : l'utilisateur
+  veut s'aligner sur l'outillage de son travail (même argument « compter double » que Dio). Gradle 9.3.1 =
+  version officiellement recommandée pour Quarkus 3.33 ; Quarkus épinglé en **3.33.2.1** (dernière
+  maintenance LTS). Syntaxe Maven↔Gradle : MEMO-CODE §6. (gs et mp restent en Maven.)
 - **Client HTTP Flutter : Dio** (décidé 2026-07-04) — raisons : **intercepteurs** (indispensables pour le
   token Keycloak + refresh), timeout/retry natifs, et **c'est le choix du boulot (GCA)** → chaque usage
   compte double. `http` reste OK pour gs (fini) ; Chopper écarté (codegen = friction).

@@ -1,28 +1,31 @@
 # =====================================================================
-#  Dockerfile multi-stage pour le backend Quarkus (mode JVM)
-#  Stage 1 : build Maven (pas besoin de Maven installé sur la machine)
-#  Stage 2 : image légère qui exécute le "fast-jar"
+#  Dockerfile multi-stage pour core-metier (Quarkus, build GRADLE, mode JVM)
+#  Stage 1 : compile avec Gradle (pas besoin de Gradle sur la machine !)
+#  Stage 2 : image legere qui execute le "fast-jar"
 # =====================================================================
 
 # ---------- Stage 1 : build ----------
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM gradle:9.3.1-jdk21 AS build
 WORKDIR /app
 
-# Le pom seul d'abord → cache des dépendances tant qu'il ne change pas.
-COPY pom.xml .
-RUN mvn -B dependency:go-offline
+# On copie d'abord les fichiers de build seuls pour profiter du cache Docker :
+# tant qu'ils ne changent pas, les dependances ne sont pas retelechargees.
+COPY build.gradle settings.gradle gradle.properties ./
+RUN gradle build -x test --no-daemon || true
 
+# Puis le code source, et on package (tests ignores ici)
 COPY src ./src
-RUN mvn -B clean package -DskipTests
+RUN gradle build -x test --no-daemon
 
 # ---------- Stage 2 : runtime ----------
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-COPY --from=build /app/target/quarkus-app/lib/ ./lib/
-COPY --from=build /app/target/quarkus-app/*.jar ./
-COPY --from=build /app/target/quarkus-app/app/ ./app/
-COPY --from=build /app/target/quarkus-app/quarkus/ ./quarkus/
+# Quarkus produit un "fast-jar" reparti dans build/quarkus-app (Gradle)
+COPY --from=build /app/build/quarkus-app/lib/ ./lib/
+COPY --from=build /app/build/quarkus-app/*.jar ./
+COPY --from=build /app/build/quarkus-app/app/ ./app/
+COPY --from=build /app/build/quarkus-app/quarkus/ ./quarkus/
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "quarkus-run.jar"]

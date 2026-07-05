@@ -1,4 +1,4 @@
-package com.example;
+package com.fluxo.flux.domain;
 
 /**
  * Nature fonctionnelle d'un emplacement dans l'entrepôt.

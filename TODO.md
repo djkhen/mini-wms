@@ -41,6 +41,17 @@ actuel tracking/flux (GCA) + IA réunis en une plateforme moderne (cf. [[gpao-un
 - [ ] Nom : si l'appli couvre **production + flux**, le nom devra peut-être embrasser les deux (Fluxo =
       candidat parapluie, ou nom plus large à trouver).
 
+## 📝 Idées reportées depuis gs (2026-07-04, scope discipline)
+
+- [ ] **Référentiel Fournisseurs / Tiers** (module `referentiel`, déjà prévu par `Lot.fournisseur`) :
+      dans gs le tiers est du texte libre (3 orthographes = 3 tiers) → ici : entité + CRUD + **dropdown**
+      dans les commandes/réceptions. Idem probablement **Clients**.
+- [ ] **Coquille de dialogue commune (`AppDialog`)** dès le jour 1 côté Flutter : titre + contenu +
+      Retour factorisés (leçon des 4 dialogues quasi identiques de gs). NB : aussi bon exercice certif
+      à faire dans gs un soir calme (composition de widgets, ~1h, risque zéro).
+- [ ] **Vue « commandes par article » native** (déjà notée) — gs l'a maintenant en v1.1 ; ici le
+      `Mouvement.reference` la rendra encore plus riche (OF, colis…).
+
 ## 🏷️ Nom du produit (idées, décision remise à plus tard — « on verra »)
 
 - **Fluxo** ⭐ — évoque le *flux* (cœur métier), court, brandable

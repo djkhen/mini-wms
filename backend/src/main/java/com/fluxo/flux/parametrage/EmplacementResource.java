@@ -1,4 +1,7 @@
-package com.example;
+package com.fluxo.flux.parametrage;
+
+import com.fluxo.flux.domain.Emplacement;
+import com.fluxo.flux.domain.TypeEmplacement;
 
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;

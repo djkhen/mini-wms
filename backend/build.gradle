@@ -1,0 +1,56 @@
+// =====================================================================
+//  core-metier — backend Quarkus de la plateforme (build GRADLE)
+//  Gradle 9.3.1 (version recommandee pour Quarkus 3.33) + Quarkus 3.33 LTS.
+//  Choix Gradle (2026-07-05) : alignement avec l'outillage du travail.
+//  Rappel syntaxe Maven <-> Gradle : MEMO-CODE.md section 6.
+// =====================================================================
+
+plugins {
+    id 'java'
+    id 'io.quarkus'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // le BOM Quarkus impose les versions de toutes les dependances io.quarkus:*
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+
+    // API REST + serialisation JSON
+    implementation 'io.quarkus:quarkus-rest'
+    implementation 'io.quarkus:quarkus-rest-jackson'
+
+    // Persistance : Hibernate ORM + Panache + PostgreSQL
+    implementation 'io.quarkus:quarkus-hibernate-orm-panache'
+    implementation 'io.quarkus:quarkus-jdbc-postgresql'
+
+    // Documentation OpenAPI / Swagger UI
+    implementation 'io.quarkus:quarkus-smallrye-openapi'
+
+    // Tests
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
+}
+
+group = 'com.fluxo'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}
+
+test {
+    systemProperty 'java.util.logging.manager', 'org.jboss.logmanager.LogManager'
+}
