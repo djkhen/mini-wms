@@ -1,0 +1,1 @@
+faire  des chanmps dynamic si possible pour chaque activaltion de widgets ave des champs par defaut 
