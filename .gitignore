@@ -20,7 +20,7 @@ target/
 *.class
 
 # ── Flutter / Dart ───────────────────────────────────────────────────
-.dart_tool/
+.daol/
 .gradle/
 build/
 .flutter-plugins
