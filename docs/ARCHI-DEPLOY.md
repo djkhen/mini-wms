@@ -74,6 +74,30 @@ Garde-fous **obligatoires** :
 - **Test d'intégration** : token tenant A ne voit rien de tenant B.
 - Démarrer avec un seul tenant `default`, mécanique en place.
 
+### 2ter. ⭐ Cas d'usage : un client peut avoir PLUSIEURS tenants (plusieurs activités)
+
+**« tenant » ≠ « client ».** Un même client peut exploiter **plusieurs plateformes isolées** — une par
+**activité** ou **site** (ex. un distributeur avec un **flux vêtement** ET un **flux téléphone**).
+
+Chaque activité = **un tenant = un schéma**. Concrètement :
+
+> **Même Docker, même appli, même base de données — ce qui DIFFÈRE, c'est le schéma** (un par activité).
+
+```
+🏢 base "fluxo" (UNE seule)
+   ├── 🏠 schéma acme_vetement    → articles/emplacements/mouvements du flux vêtement
+   └── 🏠 schéma acme_telephone   → articles/emplacements/mouvements du flux téléphone
+```
+(base = l'immeuble · schéma = un appartement · tables = les pièces ; mêmes pièces, meubles propres, pas de vue chez le voisin.)
+
+- **Provisioning** : relancer `add-tenant.sh` **une fois par activité** (`acme_vetement`, puis `acme_telephone`). **Zéro dev.**
+- **Pourquoi ça marche sans code spécifique** : Fluxo est **générique** (agnostique de la marchandise). La
+  spécificité métier vit dans les **données**, pas le code — téléphone → article en traçabilité **SERIE**
+  (IMEI) ; vêtement → **LOT** + variantes taille/couleur + champs custom JSONB (conception §8bis).
+- **Alternative** (si les deux activités **partagent** des masters — fournisseurs communs, reporting
+  consolidé) : **un seul tenant** + une dimension **`Site`/`Activité`** interne. Défaut retenu : **tenants
+  séparés** quand les activités sont indépendantes (plus étanche, déjà supporté).
+
 ---
 
 ## 3. Provisionner un client — CAS NORMAL (modèle 2, schéma)
