@@ -46,6 +46,57 @@
 
 ---
 
+## ⚖️ Décisions & arbitrages (ce qui est retenu, ce qui est écarté, et son coût)
+
+> Registre honnête : pour chaque choix, l'**alternative écartée** + l'**avantage** ET l'**inconvénient**
+> assumé de ce qu'on a fait. Un choix sans inconvénient connu = un choix pas encore compris.
+
+### 1. Migrations — **Liquibase** _(écarté : Flyway)_
+- ✅ Standard entreprise ; rollback déclaré ; schéma = code versionné (master XML + changesets) ; comble un manque non pratiqué au boulot.
+- ⚠️ Plus verbeux que Flyway (XML + SQL formaté) ; checksum strict (un changeset joué est immuable → toute correction = nouveau fichier).
+
+### 2. Build backend — **Gradle 9.3.1** _(écarté : Maven)_
+- ✅ Aligné sur l'outillage du boulot (GCA) ; build incrémental rapide ; flexible.
+- ⚠️ Syntaxe moins universelle que le POM ; gs/mp restent en Maven → deux outils à maintenir dans l'écosystème perso.
+
+### 3. Client HTTP Flutter — **Dio** _(écarté à la maison : Chopper, déjà pratiqué au boulot)_
+- ✅ Standard communautaire, code vitrine lisible ; zéro `build_runner` ; intercepteurs Keycloak simples ; couvre l'outil que le boulot ne me fait pas pratiquer.
+- ⚠️ Pas de codegen typé (contrats écrits main) ; ne réutilise pas le réflexe Chopper quotidien.
+
+### 4. Multi-tenant — **1 schéma Postgres/client** _(écarté : `tenant_id` ; en réserve : base/client, silo)_
+- ✅ Isolation logique forte sans le poids d'une base par client ; SCHEMA↔DATABASE réversible sans refactor ; pas de `WHERE tenant` à oublier.
+- ⚠️ Les migrations doivent passer sur **tous** les schémas ; pas l'isolation **physique** d'un silo ; un bug du `TenantResolver` = fuite potentielle (→ garde-fous obligatoires).
+
+### 5. Stock — **dérivé des mouvements** _(écarté : table `Stock(quantité)` compteur)_
+- ✅ Journal auditable ; stock à n'importe quelle date passée gratuit ; physique vs prévisionnel ; jamais de désync compteur.
+- ⚠️ Coût de calcul (Σ) qui grossit → index puis snapshot à grande échelle ; plus abstrait qu'un compteur (courbe de compréhension).
+
+### 6. API — **DTO systématiques** _(écarté : exposer l'entité brute)_
+- ✅ Contrat JSON explicite ; supprime les pièges lazy-loading (500) ; découple modèle interne/externe.
+- ⚠️ Boilerplate (record + mapper `de()`) par entité ; risque de désync DTO↔entité (ex. bug designation/description inversé rencontré).
+
+### 7. PATCH — **`readerForUpdating`** _(écarté : `@JsonSetter(nulls = Nulls.SKIP)`)_
+- ✅ Décision **locale** au PATCH (le PUT garde « remplace tout ») ; distingue *absent* de *null* → peut vider un champ volontairement.
+- ⚠️ Exige de charger l'entité d'abord + `ObjectMapper` injecté ; un `null` explicite **écrase** → valider **après** la fusion.
+
+### 8. UoM — **1 pivot `stock_uom`/article + conversions au référentiel** _(écarté : stock en unités multiples)_
+- ✅ La somme des mouvements reste une addition bête (zéro conversion à la lecture) ; conversions définies une fois, réutilisées.
+- ⚠️ Une conversion manquante bloque une saisie ; le pivot mal choisi se paie cher (re-choisir = re-convertir l'historique).
+
+### 9. Article bois — **une fiche par dimension** _(alternative ouverte : dimensions portées par le `lot`)_ ❓
+- ✅ Simple, standard ; chaque référence = un article net et traçable.
+- ⚠️ Prolifération d'articles si beaucoup de dimensions → **à réévaluer** pour le sur-mesure (question non tranchée, cf. CLAUDE.md).
+
+### 10. Hébergement — **Railway** _(écarté pour l'instant : VPS + Docker + Caddy)_
+- ✅ CD + HTTPS gratuits, zéro ops, build Dockerfile direct depuis GitHub.
+- ⚠️ Moins de maîtrise et coût moins optimisé à l'échelle ; dépendance à la plateforme.
+
+### 11. Archi — **monolithe modulaire (3 services)** _(écarté : nanoservices / full microservices d'emblée)_
+- ✅ Simplicité de départ ; un module peut sortir en vrai microservice plus tard sans réécriture ; évite le monolithe distribué.
+- ⚠️ Frontières de modules à discipliner (interfaces only) sinon couplage rampant ; pas la scalabilité indépendante dès le jour 1.
+
+---
+
 ## 💡 Idée d'architecture (2026-07-03) — app unique + microservices + IA + dashboard
 
 - [ ] **Une seule application, microservices séparés** (WMS-core + services dédiés).
