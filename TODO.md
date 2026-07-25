@@ -2,6 +2,49 @@
 
 > Bac à idées du projet. Capturé en vrac, rangé ensuite. Projet **en pause**
 > (focus actuel = certif Flutter + gestion-stock) → idées à reprendre plus tard.
+>
+> 🔻 **Deux étages** : d'abord le **reste-à-faire actionnable** (tâches concrètes, court terme) ;
+> ensuite le **bac à idées / vision** (plus loin, à mûrir).
+
+## 🔧 Reste-à-faire actionnable (à jour 2026-07-25)
+
+### ▶️ En cours
+- [ ] **PATCH Emplacement** — sur `EmplacementResource` : renommer le PUT `modifier` → `modifierComplet`
+      **+** ajouter `modifierPartiel` (PATCH, `readerForUpdating`), sur le modèle d'`ArticleResource`.
+      Recette : [NOTES-DEV.md](NOTES-DEV.md) (entrée 2026-07-25).
+
+### ⏭️ Prochaines (référentiel Article terminé)
+- [ ] **Merger** `feature/referentiel-article` → `main` (Article CRUD + PUT/PATCH fini et testé).
+- [ ] **Seed `ArticleDataInitializer`** — démos couvrant les 3 traçabilités (AUCUN/LOT/SERIE) + 1 inactif
+      (dev uniquement, désactivé en prod via profil Quarkus).
+- [ ] **Migration 003 — champ `family`** sur `Article` (SIMPLE|BOIS|PANNEAU|CAISSE), cf. §6ter conception.
+
+### ⭐ Grosse brique — NOYAU FLUX (stock dérivé)
+- [ ] **`stock_move`** (journal immuable, `quantity`>0, sens par emplacements virtuels) — **PAS** de table
+      Stock-compteur ; le stock devient une **vue d'agrégation**. Design figé : [conception §6ter](docs/conception-plateforme.md).
+- [ ] **Référentiel UoM** — tables `uom` + `uom_category` (+ `packaging` lié à l'article) et le `stock_uom`
+      pivot sur `Article`. Modèle nailé : [conception §6quater](docs/conception-plateforme.md).
+- [ ] **Réception** (`reception` + `reception_line`) — 1er vrai flux : saisie en unité d'achat →
+      **conversion** vers `stock_uom` → génère un `stock_move`. (Suite logique après `stock_move`.)
+
+### 🧹 Nettoyages / dette (petits, à caser)
+- [ ] **`EmplacementResource` expose l'entité brute** (pas de DTO) → aligner sur le pattern `ArticleDto`
+      (dette `EmplacementDto` WIP, évite les pièges lazy-loading).
+- [ ] **Scaffold `mobile/`** à committer proprement (`chore: scaffold mobile`) ; retirer les stubs vides
+      (`mobile/lib/generated/assets.dart`).
+- [ ] **Javadoc fantôme** dans `Emplacement.findByCode` à nettoyer.
+
+### 🚀 Ops / infra (quand le socle tourne)
+- [ ] **CI GitHub Actions** `.github/workflows/build.yml` — `./gradlew build` + tests ; plus tard build+tests
+      **natifs**. Cf. [ARCHI-DEPLOY §6](docs/ARCHI-DEPLOY.md).
+- [ ] **Multi-tenant** — `TenantResolver` unique (tenant depuis JWT, 401 si absent) + trancher le
+      **mécanisme de migration par schéma** (app Quarkus vs CLI Liquibase). Point ouvert : [ARCHI-DEPLOY §3](docs/ARCHI-DEPLOY.md).
+
+### 📄 Docs (décision à froid)
+- [ ] **Réaligner le README sur Fluxo** — il décrit encore un « mini-WMS générique » (pré-pivot plateforme).
+      Décision de com' : jusqu'où afficher « plateforme » vs profil bas (repo issu du legacy employeur).
+
+---
 
 ## 💡 Idée d'architecture (2026-07-03) — app unique + microservices + IA + dashboard
 
