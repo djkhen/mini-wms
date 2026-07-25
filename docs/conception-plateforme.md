@@ -80,6 +80,47 @@ Le **`Mouvement` estampille le lot** à chaque étape ; la **`LienGenealogie`** 
 consommés → permet le **rappel ciblé** (⬇️ descendante : « qui est touché par ce lot ? ») et « de quoi
 c'est fait » (⬆️ ascendante). Le **n° de lot** est l'identifiant qui traverse toute la chaîne.
 
+## 6ter. ⭐ NOYAU FLUX — stock DÉRIVÉ des mouvements (adopté 2026-07, schéma Odoo-like)
+
+Source : [`schema-bd-wms-gpao.html`](schema-bd-wms-gpao.html) (issu d'une session Odoo de l'utilisateur,
+retenu comme **socle** car il réalise SA philosophie « le stock se **CALCULE**, pas un compteur »).
+
+> 🔤 **Terminologie figée : Produit = Article = product** — MÊME concept (une fiche référentiel). Fluxo dit
+> « **Article** » ; c'est le `product` du schéma. Plus jamais d'hésitation.
+
+**Principe** : le stock n'est **jamais stocké** → il est **DÉRIVÉ** de `stock_move` (Σ entrées − sorties DONE).
+⚠️ Notre ancienne table `Stock(quantité)` = un **COMPTEUR** = l'anti-pattern → **ABANDONNÉE**, remplacée par
+une **vue/requête**. (Idem le CONTENU d'une caisse : dérivé de la Σ des mouvements du package.)
+
+**Le cœur — `stock_move`** (journal **immuable**) : article, lot, `quantity` (**>0 toujours**), uom,
+`source_location→dest_location`, `source_package→dest_package`, `state` DRAFT|DONE|CANCELLED, origin_type/id.
+Le **SENS vient des emplacements** (dont **VIRTUELS** : `FOURNISSEUR`, `CLIENT`, `PRODUCTION`, `PERTE`),
+**jamais** d'un signe ni d'un type ENTRÉE/SORTIE en dur → **UNE seule mécanique** pour
+achat / vente / production / casse / mise en caisse.
+
+**Entités du noyau** : `material` (densité) · `uom` · `location` (type + parent, dont virtuels) ·
+**`article`** (⭐ champ **`family`** SIMPLE|BOIS|PANNEAU|CAISSE, dimensions, `tracking` NONE|LOT|SERIAL,
+`is_container` + payload_max/tare/inner) · `lot` · `bom`+`bom_line` · `work_order` (OF) ·
+`package` (la caisse-**contenant** : article+lot série, `parent_package` imbriqué) ·
+`reception`+`reception_line` · `stock_move`.
+
+**7 règles d'or** : (1) une seule mécanique (mouvements) ; (2) stock dérivé ; (3) contenu caisse dérivé ;
+(4) **poids en cascade** (pesé lot → densité×humidité mesurée → densité nominale `material`) ; (5) charge :
+Σ contenu ≤ `payload_max_kg` (→ bon de transport) ; (6) **immuable** (jamais éditer un move validé →
+mouvement inverse, journal auditable) ; (7) **multi-tenant = 1 schéma Postgres/client** (pas de `tenant_id`).
+
+**Négoce vs fabrication, unifié ici** : un article de négoce = un `article` **sans `bom`** (reçu → vendu :
+`FOURNISSEUR→INTERNE→CLIENT`) ; une caisse = un `article` **avec `bom`** (fabriqué via `work_order`). Même table.
+
+**FUSION avec le reste du CDC** : ce noyau = le **socle FLUX/PRODUCTION**. On **empile** par-dessus nos
+couches (commercial/tarif, devis, ordonnancement, moteur de formules GPAO/débit + CODE SEI, intégrations
+Sage/WMS) — compatibles (ex. « dispo matière » de l'ordonnancement = une **requête sur les mouvements**).
+
+**Impact CODE** : prochaine grosse brique = **`stock_move`** (pas une table Stock-compteur) ; `Article`
+gagne un champ **`family`** (migration 003) ; le stock devient une **vue d'agrégation** (+ index, snapshot
+plus tard, cf. pied de page du schéma). Le modèle `tracabilite-model.java` est **révisé** en conséquence
+(son `Stock`-compteur → dérivé).
+
 ## 7. Récit de migration (Uniface → moderne) — **argument portfolio**
 - **Legacy** : monolithe **Uniface** (GPAO **+** WMS même base), rustines (caisse virtuelle pour négoce),
   éditions Crystal Report, intégration Sage X3.
@@ -159,6 +200,9 @@ l'autre en direct) → un module peut être **sorti en vrai microservice plus ta
 - **Multi-sites** — le legacy l'était (options par site) → prévoir `Site` dès le modèle.
 - **Mobile atelier/logistique** — **scan** + saisie terrain → place naturelle pour les compétences **Flutter** (relie la certif au projet).
 - **Migration des données legacy** — catalogue, tarifs, historique depuis Uniface/SQL Server (souvent le plus gros chantier réel).
+- **Reprise de données à l'installation client** (noté 2026-07-05) : chaque client a SES emplacements/articles
+  → module d'**import CSV/Excel** (plan d'entrepôt, catalogue). Les seeds de démo = dev uniquement
+  (désactivés en prod — profil Quarkus).
 - **Reporting / KPI** — OTD (respect délais), **taux de charge des postes**, retards, valorisation stock.
 
 **🧩 Champs personnalisés par client** (besoin vu au boulot de l'utilisateur, 2026-07-05) : une plateforme
