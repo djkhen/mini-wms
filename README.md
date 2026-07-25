@@ -29,6 +29,8 @@ et le modèle métier**, **jamais** le code ni les données réelles.
 mini-wms/
 ├── NOTES-DEV.md                   Journal de dev (chronologique) — à lire en 1er
 ├── docs/
+│   ├── conception-plateforme.md   Vision, périmètre, modèle (Fluxo) — doc vivant
+│   ├── ARCHI-DEPLOY.md            Déploiement, multi-tenant, provisioning (ops)
 │   ├── migration-wms-scoping.md   Cadrage : domaine, schéma ER, décisions
 │   └── legacy-analysis.md         Reverse anonymisé des sources legacy
 ├── _legacy/                       PHP source (LOCAL, gitignoré)
