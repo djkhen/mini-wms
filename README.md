@@ -43,10 +43,11 @@ mini-wms/
 docker compose up --build          # API sur http://localhost:8080
 
 # Ou en dev (Postgres local sur 5432, base wmsdb/wms/wms) :
-cd backend && mvn quarkus:dev      # API sur http://localhost:8080
+cd backend && ./gradlew quarkusDev # API sur http://localhost:8080
 ```
 
-Swagger UI : `/q/swagger-ui`. Endpoints actuels : `GET/POST/PUT/DELETE /emplacements`.
+Swagger UI : `/q/swagger-ui`. Endpoints actuels : `/emplacements` (GET/POST/PUT/DELETE)
+et `/articles` (GET/POST/PUT/PATCH/DELETE).
 
 ## Méthode de migration
 
