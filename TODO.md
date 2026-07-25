@@ -14,7 +14,8 @@
       Recette : [NOTES-DEV.md](NOTES-DEV.md) (entrée 2026-07-25).
 
 ### ⏭️ Prochaines (référentiel Article terminé)
-- [ ] **Merger** `feature/referentiel-article` → `main` (Article CRUD + PUT/PATCH fini et testé).
+- [x] ~~**Merger** `feature/referentiel-article` → `main`~~ ✅ FAIT le 2026-07-25 (merge `--no-ff`, poussé).
+      Article (CRUD + PUT/PATCH) est désormais officiel sur `main`.
 - [ ] **Seed `ArticleDataInitializer`** — démos couvrant les 3 traçabilités (AUCUN/LOT/SERIE) + 1 inactif
       (dev uniquement, désactivé en prod via profil Quarkus).
 - [ ] **Migration 003 — champ `family`** sur `Article` (SIMPLE|BOIS|PANNEAU|CAISSE), cf. §6ter conception.
