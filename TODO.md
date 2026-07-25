@@ -19,8 +19,9 @@
 ### ⏭️ Prochaines (référentiel Article terminé)
 - [x] ~~**Merger** `feature/referentiel-article` → `main`~~ ✅ FAIT le 2026-07-25 (merge `--no-ff`, poussé).
       Article (CRUD + PUT/PATCH) est désormais officiel sur `main`.
-- [ ] **Seed `ArticleDataInitializer`** — démos couvrant les 3 traçabilités (AUCUN/LOT/SERIE) + 1 inactif
-      (dev uniquement, désactivé en prod via profil Quarkus).
+- [x] ~~**Seed `ArticleDataInitializer`**~~ ✅ FAIT le 2026-07-26 (branche `feature/article-seed`) — 6 articles
+      démo (3 traçabilités AUCUN/LOT/SERIE + 1 inactif), thème bois. Filtres `?tracabilite=`/`?actif=` testés.
+      ⚠️ à désactiver en prod via profil Quarkus.
 - [ ] **Migration 003 — champ `family`** sur `Article` (SIMPLE|BOIS|PANNEAU|CAISSE), cf. §6ter conception.
 
 ### ⭐ Grosse brique — NOYAU FLUX (stock dérivé)
