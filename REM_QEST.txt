@@ -1,0 +1,1 @@
+faire des chanmps dynamique si possible pour chaque activaltion de widgets sur l'acceuille avec des champs par defaut 
