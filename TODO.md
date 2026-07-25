@@ -26,6 +26,13 @@
       pivot sur `Article`. Modèle nailé : [conception §6quater](docs/conception-plateforme.md).
 - [ ] **Réception** (`reception` + `reception_line`) — 1er vrai flux : saisie en unité d'achat →
       **conversion** vers `stock_uom` → génère un `stock_move`. (Suite logique après `stock_move`.)
+- [ ] **Emplacement → modèle `location` du schéma** (à faire AVEC `stock_move`) — enrichir l'entité :
+      ajouter le `type` **VIRTUEL** (INTERNE | FOURNISSEUR | CLIENT | PRODUCTION | PERTE, **indispensable**
+      au stock dérivé : achat = `FOURNISSEUR→INTERNE`, vente = `INTERNE→CLIENT`, casse = `INTERNE→PERTE`)
+      **+ `parent_id`** (arborescence Entrepôt→Zone→case). ⚠️ **Garder les DEUX axes sans les confondre** :
+      le `type` actuel = **rôle fonctionnel** (RECEPTION/STOCKAGE/…) ; le nouveau = **réel vs virtuel**.
+      ⏸️ **Pas avant `stock_move`** (les emplacements virtuels ne servent à rien sans mouvements = travail
+      dans le vide). Comparaison détaillée : entité actuelle vs table `location` de [`schema-bd-wms-gpao.html`](docs/schema-bd-wms-gpao.html).
 
 ### 🧹 Nettoyages / dette (petits, à caser)
 - [ ] **`EmplacementResource` expose l'entité brute** (pas de DTO) → aligner sur le pattern `ArticleDto`
