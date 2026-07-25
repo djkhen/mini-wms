@@ -8,10 +8,13 @@
 
 ## 🔧 Reste-à-faire actionnable (à jour 2026-07-25)
 
-### ▶️ En cours
-- [ ] **PATCH Emplacement** — sur `EmplacementResource` : renommer le PUT `modifier` → `modifierComplet`
-      **+** ajouter `modifierPartiel` (PATCH, `readerForUpdating`), sur le modèle d'`ArticleResource`.
-      Recette : [NOTES-DEV.md](NOTES-DEV.md) (entrée 2026-07-25).
+### ✅ Finition Emplacement — FAIT le 2026-07-25 (branche `feature/finition-emplacement`)
+- [x] **CRUD en DTO** (`EmplacementDto` + mapper `de()`) — l'API n'expose plus l'entité brute.
+- [x] **Filtre `?code=`** sur la liste (lookup par identifiant métier, cohérent avec Article).
+- [x] **Javadoc fantôme** nettoyé dans `Emplacement.findByCode`.
+- [ ] **PATCH Emplacement** — ⏸️ **REPORTÉ (YAGNI)** : le PUT suffit. À n'ajouter **que si** un bouton
+      « désactiver un emplacement » apparaît (alors : rename `modifier`→`modifierComplet` + `modifierPartiel`
+      via `readerForUpdating`, recette [NOTES-DEV.md](NOTES-DEV.md) 2026-07-25).
 
 ### ⏭️ Prochaines (référentiel Article terminé)
 - [x] ~~**Merger** `feature/referentiel-article` → `main`~~ ✅ FAIT le 2026-07-25 (merge `--no-ff`, poussé).
@@ -36,11 +39,8 @@
       dans le vide). Comparaison détaillée : entité actuelle vs table `location` de [`schema-bd-wms-gpao.html`](docs/schema-bd-wms-gpao.html).
 
 ### 🧹 Nettoyages / dette (petits, à caser)
-- [ ] **`EmplacementResource` expose l'entité brute** (pas de DTO) → aligner sur le pattern `ArticleDto`
-      (dette `EmplacementDto` WIP, évite les pièges lazy-loading).
 - [ ] **Scaffold `mobile/`** à committer proprement (`chore: scaffold mobile`) ; retirer les stubs vides
       (`mobile/lib/generated/assets.dart`).
-- [ ] **Javadoc fantôme** dans `Emplacement.findByCode` à nettoyer.
 
 ### 🚀 Ops / infra (quand le socle tourne)
 - [ ] **CI GitHub Actions** `.github/workflows/build.yml` — `./gradlew build` + tests ; plus tard build+tests
