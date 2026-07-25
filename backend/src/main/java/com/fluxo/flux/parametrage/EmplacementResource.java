@@ -26,7 +26,7 @@ import java.util.List;
  *
  * Tous les endpoints sont sous /emplacements et échangent du JSON.
  *
- *  GET    /emplacements                   liste (filtres ?zone= &type= &actif=)
+ *  GET    /emplacements                   liste (filtres ?code= &zone= &type= &actif=)
  *  GET    /emplacements/{id}              détail
  *  POST   /emplacements                   création (201)
  *  PUT    /emplacements/{id}              modification
@@ -37,28 +37,34 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public class EmplacementResource {
 
-    // GET /emplacements  -> liste, filtrable par zone, type et/ou actif.
+    // GET /emplacements  -> liste (DTO), filtrable par zone, type et/ou actif.
+    // @Transactional : le mapping vers DTO parcourt les entités pendant que la session est ouverte.
     @GET
-    public List<Emplacement> liste(@QueryParam("zone") String zone,
-                                   @QueryParam("type") TypeEmplacement type,
-                                   @QueryParam("actif") Boolean actif) {
+    @Transactional
+    public List<EmplacementDto> liste(@QueryParam("code") String code,
+                                      @QueryParam("zone") String zone,
+                                      @QueryParam("type") TypeEmplacement type,
+                                      @QueryParam("actif") Boolean actif) {
         StringBuilder where = new StringBuilder("1=1");
         Parameters params = new Parameters();
+        if (code != null)  { where.append(" and code = :code");   params.and("code", code); }
         if (zone != null)  { where.append(" and zone = :zone");   params.and("zone", zone); }
         if (type != null)  { where.append(" and type = :type");   params.and("type", type); }
         if (actif != null) { where.append(" and actif = :actif"); params.and("actif", actif); }
-        return Emplacement.find(where.toString(), params).list();
+        List<Emplacement> emplacements = Emplacement.find(where.toString(), params).list();
+        return emplacements.stream().map(EmplacementDto::de).toList();
     }
 
-    // GET /emplacements/{id}  -> un emplacement précis
+    // GET /emplacements/{id}  -> un emplacement précis (DTO)
     @GET
     @Path("/{id}")
-    public Emplacement detail(@PathParam("id") Long id) {
+    @Transactional
+    public EmplacementDto detail(@PathParam("id") Long id) {
         Emplacement e = Emplacement.findById(id);
         if (e == null) {
             throw new WebApplicationException("Emplacement " + id + " introuvable", 404);
         }
-        return e;
+        return EmplacementDto.de(e);
     }
 
     // POST /emplacements  -> crée un emplacement
@@ -75,14 +81,14 @@ public class EmplacementResource {
                     "Le code '" + emplacement.code + "' existe déjà", 409);
         }
         emplacement.persist();
-        return Response.status(Response.Status.CREATED).entity(emplacement).build();
+        return Response.status(Response.Status.CREATED).entity(EmplacementDto.de(emplacement)).build();
     }
 
     // PUT /emplacements/{id}  -> met à jour un emplacement
     @PUT
     @Path("/{id}")
     @Transactional
-    public Emplacement modifier(@PathParam("id") Long id, Emplacement data) {
+    public EmplacementDto modifier(@PathParam("id") Long id, Emplacement data) {
         Emplacement e = Emplacement.findById(id);
         if (e == null) {
             throw new WebApplicationException("Emplacement " + id + " introuvable", 404);
@@ -102,7 +108,7 @@ public class EmplacementResource {
         e.travee = data.travee;
         e.niveau = data.niveau;
         e.actif = data.actif;
-        return e; // dirty checking Hibernate → mise à jour en base au commit
+        return EmplacementDto.de(e); // dirty checking Hibernate → mise à jour en base au commit
     }
 
     // DELETE /emplacements/{id}  -> supprime un emplacement
