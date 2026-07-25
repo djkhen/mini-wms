@@ -3,24 +3,24 @@ package com.fluxo.referentiel.parametrage;
 import com.fluxo.referentiel.domain.ModeTracabilite;
 import jakarta.ws.rs.QueryParam;
 
-public class ArtcleRecherche {
+public class ArticleRecherche {
 	@QueryParam("reference")
-	String reference;
+	public String reference;
 
 	@QueryParam("designation")
-	String designation;
+	public String designation;
 
 	@QueryParam("description")
-	String description;
+	public String description;
 
 	@QueryParam("unite")
-	String unite ;
+	public String unite ;
 
 	@QueryParam("tracabilite")
-	ModeTracabilite tracabilite;
+	public ModeTracabilite tracabilite;
 
 	@QueryParam("actif")
-	boolean actif;
+	public Boolean actif;
 
 
 

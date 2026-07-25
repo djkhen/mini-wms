@@ -15,13 +15,12 @@ public record ArticleDto(
 
 	static ArticleDto de(Article art) {
 		return new ArticleDto(
-				art.id ,
+				art.id,
 				art.reference,
-				art.description ,
-				art.designation,
-				art.unite ,
-				art.tracabilite ,
-				art.actif
-				 ) ;
-	}   // ← à toi (7 champs, dans l'ordre)
+				art.designation,   // ⚠️ 3e param = designation (etait INVERSE avec description !)
+				art.description,   // ⚠️ 4e param = description
+				art.unite,
+				art.tracabilite,
+				art.actif);
+	}
 }
