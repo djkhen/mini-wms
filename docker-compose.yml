@@ -39,7 +39,9 @@ services:
       DB_URL: jdbc:postgresql://db:5432/wmsdb
       DB_USER: wms
       DB_PASSWORD: wms
-      CORS_ORIGINS: http://localhost:4200,http://localhost:8090,http://localhost:5000,http://localhost:5001
+      # DEV : regex (entre /.../) -> tout port localhost accepte (Flutter web prend un port aleatoire).
+      # PROD : remplacer par le vrai domaine du front (jamais la regex).
+      CORS_ORIGINS: "/http://localhost:.*/"
     depends_on:
       db:
         condition: service_healthy
