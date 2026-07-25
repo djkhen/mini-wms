@@ -80,6 +80,84 @@ Le **`Mouvement` estampille le lot** à chaque étape ; la **`LienGenealogie`** 
 consommés → permet le **rappel ciblé** (⬇️ descendante : « qui est touché par ce lot ? ») et « de quoi
 c'est fait » (⬆️ ascendante). Le **n° de lot** est l'identifiant qui traverse toute la chaîne.
 
+## 6ter. ⭐ NOYAU FLUX — stock DÉRIVÉ des mouvements (adopté 2026-07, schéma Odoo-like)
+
+Source : [`schema-bd-wms-gpao.html`](schema-bd-wms-gpao.html) (issu d'une session Odoo de l'utilisateur,
+retenu comme **socle** car il réalise SA philosophie « le stock se **CALCULE**, pas un compteur »).
+
+> 🔤 **Terminologie figée : Produit = Article = product** — MÊME concept (une fiche référentiel). Fluxo dit
+> « **Article** » ; c'est le `product` du schéma. Plus jamais d'hésitation.
+
+**Principe** : le stock n'est **jamais stocké** → il est **DÉRIVÉ** de `stock_move` (Σ entrées − sorties DONE).
+⚠️ Notre ancienne table `Stock(quantité)` = un **COMPTEUR** = l'anti-pattern → **ABANDONNÉE**, remplacée par
+une **vue/requête**. (Idem le CONTENU d'une caisse : dérivé de la Σ des mouvements du package.)
+
+**Le cœur — `stock_move`** (journal **immuable**) : article, lot, `quantity` (**>0 toujours**), uom,
+`source_location→dest_location`, `source_package→dest_package`, `state` DRAFT|DONE|CANCELLED, origin_type/id.
+Le **SENS vient des emplacements** (dont **VIRTUELS** : `FOURNISSEUR`, `CLIENT`, `PRODUCTION`, `PERTE`),
+**jamais** d'un signe ni d'un type ENTRÉE/SORTIE en dur → **UNE seule mécanique** pour
+achat / vente / production / casse / mise en caisse.
+
+**Entités du noyau** : `material` (densité) · `uom` · `location` (type + parent, dont virtuels) ·
+**`article`** (⭐ champ **`family`** SIMPLE|BOIS|PANNEAU|CAISSE, dimensions, `tracking` NONE|LOT|SERIAL,
+`is_container` + payload_max/tare/inner) · `lot` · `bom`+`bom_line` · `work_order` (OF) ·
+`package` (la caisse-**contenant** : article+lot série, `parent_package` imbriqué) ·
+`reception`+`reception_line` · `stock_move`.
+
+**7 règles d'or** : (1) une seule mécanique (mouvements) ; (2) stock dérivé ; (3) contenu caisse dérivé ;
+(4) **poids en cascade** (pesé lot → densité×humidité mesurée → densité nominale `material`) ; (5) charge :
+Σ contenu ≤ `payload_max_kg` (→ bon de transport) ; (6) **immuable** (jamais éditer un move validé →
+mouvement inverse, journal auditable) ; (7) **multi-tenant = 1 schéma Postgres/client** (pas de `tenant_id`).
+
+**Négoce vs fabrication, unifié ici** : un article de négoce = un `article` **sans `bom`** (reçu → vendu :
+`FOURNISSEUR→INTERNE→CLIENT`) ; une caisse = un `article` **avec `bom`** (fabriqué via `work_order`). Même table.
+
+**FUSION avec le reste du CDC** : ce noyau = le **socle FLUX/PRODUCTION**. On **empile** par-dessus nos
+couches (commercial/tarif, devis, ordonnancement, moteur de formules GPAO/débit + CODE SEI, intégrations
+Sage/WMS) — compatibles (ex. « dispo matière » de l'ordonnancement = une **requête sur les mouvements**).
+
+**Impact CODE** : prochaine grosse brique = **`stock_move`** (pas une table Stock-compteur) ; `Article`
+gagne un champ **`family`** (migration 003) ; le stock devient une **vue d'agrégation** (+ index, snapshot
+plus tard, cf. pied de page du schéma). Le modèle `tracabilite-model.java` est **révisé** en conséquence
+(son `Stock`-compteur → dérivé).
+
+## 6quater. 📐 Modèle UoM — pivot + référentiel (nailé 2026-07-25, session concept)
+
+Prolonge le §6ter : le `stock_move` porte une `uom` — voici **quelle** unité, et **d'où** vient la conversion.
+
+**Le pivot (`stock_uom`)** — chaque `article` a **UNE** unité de stock, choisie une fois. **Tous** ses
+`stock_move` sont comptés dans cette unité → la dérivation `Σ mouvements` reste une **addition bête**, jamais
+une conversion à la lecture. Règle de choix : *« dans quelle unité je compterais ce stock à la main dans
+l'entrepôt ? »*. Conversion = **une étoile** (chaque unité déclare 1 facteur vers le pivot), pas une toile N².
+> ⚠️ Deux pivots à ne pas confondre : **pivot de catégorie** (réf. mathématique d'une famille : le mètre
+> pour les longueurs) vs **pivot de l'article** (`stock_uom`, choix métier par article). Le 1er rend les
+> conversions possibles ; le 2ᵉ rend la somme des mouvements cohérente.
+
+**quantité × unité = mesure** — l'unité qualifie **le nombre saisi**, pas « un objet ». `100 + unité` = 100
+pièces ; `3 + colis` = 3 pas de « colis ». À la saisie (réception…), l'opérateur choisit **quelle unité +
+combien** ; il **ne tape JAMAIS le taux** (déjà en base). On convertit **à l'écriture** → le mouvement est
+stocké dans le `stock_uom`.
+
+**Où vit le facteur de conversion** (le « 50 » de 1 colis = 50 pièces) — **3 cas** :
+| Type | Le facteur est… | Où |
+|---|---|---|
+| Ratio **universel** (douzaine=12, m=100 cm) | défini une fois, **global** | table `uom` (ratio vers pivot de catégorie) |
+| **Conditionnement propre à l'article** (colis=50 pour CET article) | défini une fois, **par article** | `packaging` lié au produit (≠ `uom` : un facteur d'`uom` est global, ne peut pas être « 50 ici, 24 là ») |
+| **Calculé** (unité→m² bois) | **calculé** à la volée | dérivé des **dimensions** article/lot (`larg×long`) |
+
+**Référentiel vs mouvement** — le facteur est une **donnée du référentiel** : définie **AVANT** l'exploitation,
+par un **admin du client** (l'éditeur pré-charge un socle : unités SI, catégories), **en table**, stable.
+L'opérateur/la réception ne fait que **la lire**. Chaîne de dépendance : `uom_category → uom → article
+(+stock_uom) → packaging → PUIS reception/stock_move`. Format **récurrent** → référentiel (code propre :
+`COLIS-50`, `COLIS-45`) ; **cas ponctuel** (un colis dépareillé de 45 exceptionnel) → **saisie sur la
+ligne/le lot**, JAMAIS une entrée référentiel (sinon poubelle : `COLIS-37`, `COLIS-48`…). Principe général :
+un **taux** est du référentiel stable (→ table), un **stock** est un résultat calculé (→ jamais de compteur).
+
+**Impact CODE** : `reception_line.uom_id` = unité de saisie (≠ `stock_uom` OK, mais **même catégorie**,
+convertible) → conversion → `stock_move` en `stock_uom`. `stock_move.uom_id` = **toujours** le `stock_uom`
+(le champ existe pour l'explicite/robustesse ; vaut `article.stock_uom` ~99 % des cas). Angle bois = le
+différenciateur : contrôle réception (poids théorique dims×densité vs pesé) tombe de la cascade de poids §6ter.
+
 ## 7. Récit de migration (Uniface → moderne) — **argument portfolio**
 - **Legacy** : monolithe **Uniface** (GPAO **+** WMS même base), rustines (caisse virtuelle pour négoce),
   éditions Crystal Report, intégration Sage X3.
@@ -159,6 +237,9 @@ l'autre en direct) → un module peut être **sorti en vrai microservice plus ta
 - **Multi-sites** — le legacy l'était (options par site) → prévoir `Site` dès le modèle.
 - **Mobile atelier/logistique** — **scan** + saisie terrain → place naturelle pour les compétences **Flutter** (relie la certif au projet).
 - **Migration des données legacy** — catalogue, tarifs, historique depuis Uniface/SQL Server (souvent le plus gros chantier réel).
+- **Reprise de données à l'installation client** (noté 2026-07-05) : chaque client a SES emplacements/articles
+  → module d'**import CSV/Excel** (plan d'entrepôt, catalogue). Les seeds de démo = dev uniquement
+  (désactivés en prod — profil Quarkus).
 - **Reporting / KPI** — OTD (respect délais), **taux de charge des postes**, retards, valorisation stock.
 
 **🧩 Champs personnalisés par client** (besoin vu au boulot de l'utilisateur, 2026-07-05) : une plateforme

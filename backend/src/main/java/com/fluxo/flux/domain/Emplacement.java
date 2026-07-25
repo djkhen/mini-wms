@@ -58,7 +58,7 @@ public class Emplacement extends PanacheEntity {
     @Column(nullable = false)
     public boolean actif = true;
 
-    /** Recherche par code (l'identifiant métier unique). */
+    /** Recherche par code (l'identifiant métier unique).  com.fluxo.referentiel.domain*/
     public static Emplacement findByCode(String code) {
         return find("code", code).firstResult();
     }

@@ -2,6 +2,100 @@
 
 > Bac à idées du projet. Capturé en vrac, rangé ensuite. Projet **en pause**
 > (focus actuel = certif Flutter + gestion-stock) → idées à reprendre plus tard.
+>
+> 🔻 **Deux étages** : d'abord le **reste-à-faire actionnable** (tâches concrètes, court terme) ;
+> ensuite le **bac à idées / vision** (plus loin, à mûrir).
+
+## 🔧 Reste-à-faire actionnable (à jour 2026-07-25)
+
+### ▶️ En cours
+- [ ] **PATCH Emplacement** — sur `EmplacementResource` : renommer le PUT `modifier` → `modifierComplet`
+      **+** ajouter `modifierPartiel` (PATCH, `readerForUpdating`), sur le modèle d'`ArticleResource`.
+      Recette : [NOTES-DEV.md](NOTES-DEV.md) (entrée 2026-07-25).
+
+### ⏭️ Prochaines (référentiel Article terminé)
+- [ ] **Merger** `feature/referentiel-article` → `main` (Article CRUD + PUT/PATCH fini et testé).
+- [ ] **Seed `ArticleDataInitializer`** — démos couvrant les 3 traçabilités (AUCUN/LOT/SERIE) + 1 inactif
+      (dev uniquement, désactivé en prod via profil Quarkus).
+- [ ] **Migration 003 — champ `family`** sur `Article` (SIMPLE|BOIS|PANNEAU|CAISSE), cf. §6ter conception.
+
+### ⭐ Grosse brique — NOYAU FLUX (stock dérivé)
+- [ ] **`stock_move`** (journal immuable, `quantity`>0, sens par emplacements virtuels) — **PAS** de table
+      Stock-compteur ; le stock devient une **vue d'agrégation**. Design figé : [conception §6ter](docs/conception-plateforme.md).
+- [ ] **Référentiel UoM** — tables `uom` + `uom_category` (+ `packaging` lié à l'article) et le `stock_uom`
+      pivot sur `Article`. Modèle nailé : [conception §6quater](docs/conception-plateforme.md).
+- [ ] **Réception** (`reception` + `reception_line`) — 1er vrai flux : saisie en unité d'achat →
+      **conversion** vers `stock_uom` → génère un `stock_move`. (Suite logique après `stock_move`.)
+
+### 🧹 Nettoyages / dette (petits, à caser)
+- [ ] **`EmplacementResource` expose l'entité brute** (pas de DTO) → aligner sur le pattern `ArticleDto`
+      (dette `EmplacementDto` WIP, évite les pièges lazy-loading).
+- [ ] **Scaffold `mobile/`** à committer proprement (`chore: scaffold mobile`) ; retirer les stubs vides
+      (`mobile/lib/generated/assets.dart`).
+- [ ] **Javadoc fantôme** dans `Emplacement.findByCode` à nettoyer.
+
+### 🚀 Ops / infra (quand le socle tourne)
+- [ ] **CI GitHub Actions** `.github/workflows/build.yml` — `./gradlew build` + tests ; plus tard build+tests
+      **natifs**. Cf. [ARCHI-DEPLOY §6](docs/ARCHI-DEPLOY.md).
+- [ ] **Multi-tenant** — `TenantResolver` unique (tenant depuis JWT, 401 si absent) + trancher le
+      **mécanisme de migration par schéma** (app Quarkus vs CLI Liquibase). Point ouvert : [ARCHI-DEPLOY §3](docs/ARCHI-DEPLOY.md).
+
+### 📄 Docs (décision à froid)
+- [ ] **Réaligner le README sur Fluxo** — il décrit encore un « mini-WMS générique » (pré-pivot plateforme).
+      Décision de com' : jusqu'où afficher « plateforme » vs profil bas (repo issu du legacy employeur).
+
+---
+
+## ⚖️ Décisions & arbitrages (ce qui est retenu, ce qui est écarté, et son coût)
+
+> Registre honnête : pour chaque choix, l'**alternative écartée** + l'**avantage** ET l'**inconvénient**
+> assumé de ce qu'on a fait. Un choix sans inconvénient connu = un choix pas encore compris.
+
+### 1. Migrations — **Liquibase** _(écarté : Flyway)_
+- ✅ Standard entreprise ; rollback déclaré ; schéma = code versionné (master XML + changesets) ; comble un manque non pratiqué au boulot.
+- ⚠️ Plus verbeux que Flyway (XML + SQL formaté) ; checksum strict (un changeset joué est immuable → toute correction = nouveau fichier).
+
+### 2. Build backend — **Gradle 9.3.1** _(écarté : Maven)_
+- ✅ Aligné sur l'outillage du boulot (GCA) ; build incrémental rapide ; flexible.
+- ⚠️ Syntaxe moins universelle que le POM ; gs/mp restent en Maven → deux outils à maintenir dans l'écosystème perso.
+
+### 3. Client HTTP Flutter — **Dio** _(écarté à la maison : Chopper, déjà pratiqué au boulot)_
+- ✅ Standard communautaire, code vitrine lisible ; zéro `build_runner` ; intercepteurs Keycloak simples ; couvre l'outil que le boulot ne me fait pas pratiquer.
+- ⚠️ Pas de codegen typé (contrats écrits main) ; ne réutilise pas le réflexe Chopper quotidien.
+
+### 4. Multi-tenant — **1 schéma Postgres/client** _(écarté : `tenant_id` ; en réserve : base/client, silo)_
+- ✅ Isolation logique forte sans le poids d'une base par client ; SCHEMA↔DATABASE réversible sans refactor ; pas de `WHERE tenant` à oublier.
+- ⚠️ Les migrations doivent passer sur **tous** les schémas ; pas l'isolation **physique** d'un silo ; un bug du `TenantResolver` = fuite potentielle (→ garde-fous obligatoires).
+
+### 5. Stock — **dérivé des mouvements** _(écarté : table `Stock(quantité)` compteur)_
+- ✅ Journal auditable ; stock à n'importe quelle date passée gratuit ; physique vs prévisionnel ; jamais de désync compteur.
+- ⚠️ Coût de calcul (Σ) qui grossit → index puis snapshot à grande échelle ; plus abstrait qu'un compteur (courbe de compréhension).
+
+### 6. API — **DTO systématiques** _(écarté : exposer l'entité brute)_
+- ✅ Contrat JSON explicite ; supprime les pièges lazy-loading (500) ; découple modèle interne/externe.
+- ⚠️ Boilerplate (record + mapper `de()`) par entité ; risque de désync DTO↔entité (ex. bug designation/description inversé rencontré).
+
+### 7. PATCH — **`readerForUpdating`** _(écarté : `@JsonSetter(nulls = Nulls.SKIP)`)_
+- ✅ Décision **locale** au PATCH (le PUT garde « remplace tout ») ; distingue *absent* de *null* → peut vider un champ volontairement.
+- ⚠️ Exige de charger l'entité d'abord + `ObjectMapper` injecté ; un `null` explicite **écrase** → valider **après** la fusion.
+
+### 8. UoM — **1 pivot `stock_uom`/article + conversions au référentiel** _(écarté : stock en unités multiples)_
+- ✅ La somme des mouvements reste une addition bête (zéro conversion à la lecture) ; conversions définies une fois, réutilisées.
+- ⚠️ Une conversion manquante bloque une saisie ; le pivot mal choisi se paie cher (re-choisir = re-convertir l'historique).
+
+### 9. Article bois — **une fiche par dimension** _(alternative ouverte : dimensions portées par le `lot`)_ ❓
+- ✅ Simple, standard ; chaque référence = un article net et traçable.
+- ⚠️ Prolifération d'articles si beaucoup de dimensions → **à réévaluer** pour le sur-mesure (question non tranchée, cf. CLAUDE.md).
+
+### 10. Hébergement — **Railway** _(écarté pour l'instant : VPS + Docker + Caddy)_
+- ✅ CD + HTTPS gratuits, zéro ops, build Dockerfile direct depuis GitHub.
+- ⚠️ Moins de maîtrise et coût moins optimisé à l'échelle ; dépendance à la plateforme.
+
+### 11. Archi — **monolithe modulaire (3 services)** _(écarté : nanoservices / full microservices d'emblée)_
+- ✅ Simplicité de départ ; un module peut sortir en vrai microservice plus tard sans réécriture ; évite le monolithe distribué.
+- ⚠️ Frontières de modules à discipliner (interfaces only) sinon couplage rampant ; pas la scalabilité indépendante dès le jour 1.
+
+---
 
 ## 💡 Idée d'architecture (2026-07-03) — app unique + microservices + IA + dashboard
 

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schéma BD · WMS + GPAO bois</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#17121A;--surface:#221A28;--surface-2:#2B2033;--line:#3A2E44;
+    --aubergine:#8A5E80;--ink:#EFE7F0;--muted:#9A8DA2;
+    --gold:#F2B441;--teal:#54D6C2;--rose:#E97393;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--canvas);color:var(--ink);font-family:"Inter",system-ui,sans-serif;
+    line-height:1.5;padding:22px 16px 60px;max-width:1040px;margin:0 auto;-webkit-font-smoothing:antialiased}
+  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--aubergine);margin-bottom:12px}
+  h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(26px,7vw,40px);
+    line-height:1.04;letter-spacing:-.02em;margin-bottom:14px}
+  .lead{color:var(--muted);font-size:14.5px;max-width:60ch;border-left:2px solid var(--aubergine);padding-left:14px}
+  .lead b{color:var(--ink);font-weight:600}
+  .sec-head{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:10px;margin:40px 0 18px}
+  .sec-head::after{content:"";flex:1;height:1px;background:var(--line)}
+  .erd{width:100%;overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px}
+  svg{display:block;min-width:900px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--muted)}
+  .legend b{font-weight:700}
+
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:16px}
+  .step .n{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;color:var(--teal);
+    border:1px solid var(--teal);border-radius:6px;padding:1px 7px;display:inline-block;margin-bottom:9px}
+  .step h4{font-family:"Bricolage Grotesque";font-weight:600;font-size:16px;margin-bottom:7px}
+  .step p{font-size:13px;color:#C9BFCF;line-height:1.5}
+  .step code{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--gold);
+    background:rgba(242,180,65,.08);padding:1px 5px;border-radius:4px}
+
+  .rules{display:flex;flex-direction:column;gap:10px}
+  .rule{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    display:flex;gap:12px;align-items:flex-start}
+  .rule .k{font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:700;letter-spacing:.06em;
+    color:var(--gold);flex:none;padding-top:2px;width:70px}
+  .rule .b{font-size:13.5px;color:#D8CEDC;line-height:1.5}
+  .rule .b b{color:var(--ink);font-weight:600}
+  pre{background:var(--canvas);border:1px solid var(--line);border-radius:10px;padding:14px;
+    overflow-x:auto;font-family:"JetBrains Mono",monospace;font-size:12px;color:#C9BFCF;line-height:1.6;margin-top:14px}
+  pre .c{color:var(--muted)} pre .k{color:var(--teal)}
+  footer{margin-top:40px;font-size:11.5px;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="eyebrow">Modèle de données · flux + production + contenant</div>
+<h1>Schéma BD<br>WMS&nbsp;+&nbsp;GPAO bois.</h1>
+<p class="lead">Un seul invariant tient tout : <b>le stock n'est jamais stocké, il est dérivé des mouvements</b>. La variabilité du bois vit dans le référentiel, la production et la réception ne font que <b>générer des mouvements</b>, et la caisse — produit fabriqué puis contenant — se modélise sans toucher au flux.</p>
+
+<div class="sec-head">Le schéma</div>
+<div class="erd">
+<svg viewBox="0 0 970 790" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8A5E80"/>
+    </marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#F2B441"/>
+    </marker>
+  </defs>
+
+  <!-- ===== relations (dessous) ===== -->
+  <g stroke="#8A5E80" stroke-width="1.3" fill="none" marker-end="url(#a)">
+    <path d="M165,330 L165,306"/>                       <!-- bom_line -> bom -->
+    <path d="M300,251 L325,251 L325,278 L346,278"/>     <!-- bom -> product -->
+    <path d="M670,254 L645,254 L645,290 L624,290"/>     <!-- lot -> product -->
+    <path d="M485,440 L485,404"/>                       <!-- stock_move -> product -->
+    <path d="M620,478 L645,478 L645,430 L666,430"/>     <!-- stock_move -> package -->
+    <path d="M805,340 L805,312"/>                       <!-- package -> lot -->
+    <path d="M805,610 L805,586"/>                       <!-- reception_line -> reception -->
+  </g>
+  <g stroke="#8A5E80" stroke-width="1.3" fill="none" stroke-dasharray="4 3" marker-end="url(#a)">
+    <path d="M620,455 L648,455 L648,178 L666,162"/>     <!-- stock_move -> location -->
+  </g>
+  <g stroke="#F2B441" stroke-width="1.5" fill="none" marker-end="url(#ag)">
+    <path d="M300,540 L346,540"/>                       <!-- work_order génère -->
+    <path d="M670,655 L645,655 L645,600 L624,600"/>     <!-- reception_line génère -->
+  </g>
+  <g fill="#F2B441" font-size="10" font-weight="700" letter-spacing=".05em">
+    <text x="305" y="533">génère</text>
+    <text x="590" y="640" text-anchor="end">génère</text>
+  </g>
+
+  <!-- ===== boîtes ===== -->
+  <!-- material -->
+  <g><rect x="30" y="60" width="270" height="102" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="30" y="60" width="270" height="27" rx="8" fill="#2B2033"/><rect x="30" y="79" width="270" height="8" fill="#2B2033"/>
+    <line x1="30" y1="87" x2="300" y2="87" stroke="#3A2E44"/>
+    <text x="44" y="78" fill="#EFE7F0" font-size="12" font-weight="700">material</text>
+    <text x="290" y="78" fill="#9A8DA2" font-size="9" text-anchor="end">référentiel</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="44" y="105"><tspan fill="#F2B441">PK</tspan> id</text>
+      <text x="44" y="119">code · label</text>
+      <text x="44" y="133" fill="#54D6C2">density_kg_m3</text>
+      <text x="44" y="147">ref_moisture_pct</text>
+    </g></g>
+
+  <!-- uom -->
+  <g><rect x="350" y="60" width="270" height="102" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="350" y="60" width="270" height="27" rx="8" fill="#2B2033"/><rect x="350" y="79" width="270" height="8" fill="#2B2033"/>
+    <line x1="350" y1="87" x2="620" y2="87" stroke="#3A2E44"/>
+    <text x="364" y="78" fill="#EFE7F0" font-size="12" font-weight="700">uom</text>
+    <text x="610" y="78" fill="#9A8DA2" font-size="9" text-anchor="end">référentiel</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="364" y="105"><tspan fill="#F2B441">PK</tspan> id</text>
+      <text x="364" y="119">code (PCE, M3, M2, ML, KG)</text>
+      <text x="364" y="133">category</text>
+      <text x="364" y="147">ratio_to_base</text>
+    </g></g>
+
+  <!-- location -->
+  <g><rect x="670" y="60" width="270" height="102" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="670" y="60" width="270" height="27" rx="8" fill="#2B2033"/><rect x="670" y="79" width="270" height="8" fill="#2B2033"/>
+    <line x1="670" y1="87" x2="940" y2="87" stroke="#3A2E44"/>
+    <text x="684" y="78" fill="#EFE7F0" font-size="12" font-weight="700">location</text>
+    <text x="930" y="78" fill="#9A8DA2" font-size="9" text-anchor="end">flux</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="684" y="105"><tspan fill="#F2B441">PK</tspan> id · code</text>
+      <text x="684" y="119" fill="#54D6C2">type: INTERNE | FOURNISSEUR</text>
+      <text x="684" y="133" fill="#54D6C2">CLIENT | PRODUCTION | PERTE</text>
+      <text x="684" y="147">parent_id → location</text>
+    </g></g>
+
+  <!-- bom -->
+  <g><rect x="30" y="200" width="270" height="102" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="30" y="200" width="270" height="27" rx="8" fill="#2B2033"/><rect x="30" y="219" width="270" height="8" fill="#2B2033"/>
+    <line x1="30" y1="227" x2="300" y2="227" stroke="#3A2E44"/>
+    <text x="44" y="218" fill="#EFE7F0" font-size="12" font-weight="700">bom</text>
+    <text x="290" y="218" fill="#9A8DA2" font-size="9" text-anchor="end">nomenclature</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="44" y="245"><tspan fill="#F2B441">PK</tspan> id</text>
+      <text x="44" y="259"><tspan fill="#8A5E80">FK</tspan> product_id → product</text>
+      <text x="44" y="273">quantity (produite)</text>
+      <text x="44" y="287">version · active</text>
+    </g></g>
+
+  <!-- product -->
+  <g><rect x="350" y="200" width="270" height="204" rx="8" fill="#221A28" stroke="#54D6C2"/>
+    <rect x="350" y="200" width="270" height="27" rx="8" fill="#2B2033"/><rect x="350" y="219" width="270" height="8" fill="#2B2033"/>
+    <line x1="350" y1="227" x2="620" y2="227" stroke="#3A2E44"/>
+    <text x="364" y="218" fill="#54D6C2" font-size="12" font-weight="700">product</text>
+    <text x="610" y="218" fill="#9A8DA2" font-size="9" text-anchor="end">article</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="364" y="245"><tspan fill="#F2B441">PK</tspan> id · code · label</text>
+      <text x="364" y="259" fill="#54D6C2">family: SIMPLE | BOIS |</text>
+      <text x="364" y="273" fill="#54D6C2">        PANNEAU | CAISSE</text>
+      <text x="364" y="287">thickness_mm · width_mm</text>
+      <text x="364" y="301">length_mm</text>
+      <text x="364" y="315"><tspan fill="#8A5E80">FK</tspan> material_id → material</text>
+      <text x="364" y="329"><tspan fill="#8A5E80">FK</tspan> stock_uom_id → uom</text>
+      <text x="364" y="343">tracking: NONE|LOT|SERIAL</text>
+      <text x="364" y="357" fill="#E97393">is_container (bool)</text>
+      <text x="364" y="371" fill="#E97393">payload_max_kg · tare_kg</text>
+      <text x="364" y="385" fill="#E97393">inner_l · inner_w · inner_h</text>
+    </g></g>
+
+  <!-- lot -->
+  <g><rect x="670" y="200" width="270" height="112" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="670" y="200" width="270" height="27" rx="8" fill="#2B2033"/><rect x="670" y="219" width="270" height="8" fill="#2B2033"/>
+    <line x1="670" y1="227" x2="940" y2="227" stroke="#3A2E44"/>
+    <text x="684" y="218" fill="#EFE7F0" font-size="12" font-weight="700">lot</text>
+    <text x="930" y="218" fill="#9A8DA2" font-size="9" text-anchor="end">traçabilité</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="684" y="245"><tspan fill="#F2B441">PK</tspan> id · number</text>
+      <text x="684" y="259"><tspan fill="#8A5E80">FK</tspan> product_id → product</text>
+      <text x="684" y="273" fill="#54D6C2">actual_moisture_pct</text>
+      <text x="684" y="287" fill="#54D6C2">actual_weight_kg</text>
+      <text x="684" y="301">created_at</text>
+    </g></g>
+
+  <!-- bom_line -->
+  <g><rect x="30" y="330" width="270" height="102" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="30" y="330" width="270" height="27" rx="8" fill="#2B2033"/><rect x="30" y="349" width="270" height="8" fill="#2B2033"/>
+    <line x1="30" y1="357" x2="300" y2="357" stroke="#3A2E44"/>
+    <text x="44" y="348" fill="#EFE7F0" font-size="12" font-weight="700">bom_line</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="44" y="375"><tspan fill="#F2B441">PK</tspan> id</text>
+      <text x="44" y="389"><tspan fill="#8A5E80">FK</tspan> bom_id → bom</text>
+      <text x="44" y="403"><tspan fill="#8A5E80">FK</tspan> component_id → product</text>
+      <text x="44" y="417">quantity · uom_id</text>
+    </g></g>
+
+  <!-- package -->
+  <g><rect x="670" y="340" width="270" height="112" rx="8" fill="#221A28" stroke="#E97393"/>
+    <rect x="670" y="340" width="270" height="27" rx="8" fill="#2B2033"/><rect x="670" y="359" width="270" height="8" fill="#2B2033"/>
+    <line x1="670" y1="367" x2="940" y2="367" stroke="#3A2E44"/>
+    <text x="684" y="358" fill="#E97393" font-size="12" font-weight="700">package</text>
+    <text x="930" y="358" fill="#9A8DA2" font-size="9" text-anchor="end">la caisse</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="684" y="385"><tspan fill="#F2B441">PK</tspan> id</text>
+      <text x="684" y="399"><tspan fill="#8A5E80">FK</tspan> product_id → product</text>
+      <text x="684" y="413"><tspan fill="#8A5E80">FK</tspan> lot_id → lot (n° série)</text>
+      <text x="684" y="427"><tspan fill="#8A5E80">FK</tspan> parent_package_id ↺</text>
+      <text x="684" y="441">sealed_at</text>
+    </g></g>
+
+  <!-- stock_move -->
+  <g><rect x="350" y="440" width="270" height="214" rx="8" fill="#221A28" stroke="#F2B441"/>
+    <rect x="350" y="440" width="270" height="27" rx="8" fill="#2B2033"/><rect x="350" y="459" width="270" height="8" fill="#2B2033"/>
+    <line x1="350" y1="467" x2="620" y2="467" stroke="#3A2E44"/>
+    <text x="364" y="458" fill="#F2B441" font-size="12" font-weight="700">stock_move</text>
+    <text x="610" y="458" fill="#9A8DA2" font-size="9" text-anchor="end">le cœur</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="364" y="485"><tspan fill="#F2B441">PK</tspan> id</text>
+      <text x="364" y="499"><tspan fill="#8A5E80">FK</tspan> product_id → product</text>
+      <text x="364" y="513"><tspan fill="#8A5E80">FK</tspan> lot_id → lot</text>
+      <text x="364" y="527" fill="#54D6C2">quantity (&gt; 0 toujours)</text>
+      <text x="364" y="541"><tspan fill="#8A5E80">FK</tspan> uom_id → uom</text>
+      <text x="364" y="555"><tspan fill="#8A5E80">FK</tspan> source_location_id</text>
+      <text x="364" y="569"><tspan fill="#8A5E80">FK</tspan> dest_location_id</text>
+      <text x="364" y="583" fill="#E97393">FK source_package_id</text>
+      <text x="364" y="597" fill="#E97393">FK dest_package_id</text>
+      <text x="364" y="611">effective_date · created_at</text>
+      <text x="364" y="625" fill="#54D6C2">state: DRAFT|DONE|CANCELLED</text>
+      <text x="364" y="639">origin_type · origin_id</text>
+    </g></g>
+
+  <!-- work_order -->
+  <g><rect x="30" y="470" width="270" height="158" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="30" y="470" width="270" height="27" rx="8" fill="#2B2033"/><rect x="30" y="489" width="270" height="8" fill="#2B2033"/>
+    <line x1="30" y1="497" x2="300" y2="497" stroke="#3A2E44"/>
+    <text x="44" y="488" fill="#EFE7F0" font-size="12" font-weight="700">work_order</text>
+    <text x="290" y="488" fill="#9A8DA2" font-size="9" text-anchor="end">OF</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="44" y="515"><tspan fill="#F2B441">PK</tspan> id · reference</text>
+      <text x="44" y="529"><tspan fill="#8A5E80">FK</tspan> bom_id → bom</text>
+      <text x="44" y="543"><tspan fill="#8A5E80">FK</tspan> product_id → product</text>
+      <text x="44" y="557">quantity</text>
+      <text x="44" y="571" fill="#54D6C2">state: DRAFT|CONFIRMED|</text>
+      <text x="44" y="585" fill="#54D6C2">   IN_PROGRESS|DONE|CANCELLED</text>
+      <text x="44" y="599">planned_date · done_date</text>
+      <text x="44" y="613"><tspan fill="#8A5E80">FK</tspan> produced_lot_id → lot</text>
+    </g></g>
+
+  <!-- reception -->
+  <g><rect x="670" y="484" width="270" height="102" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="670" y="484" width="270" height="27" rx="8" fill="#2B2033"/><rect x="670" y="503" width="270" height="8" fill="#2B2033"/>
+    <line x1="670" y1="511" x2="940" y2="511" stroke="#3A2E44"/>
+    <text x="684" y="502" fill="#EFE7F0" font-size="12" font-weight="700">reception</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="684" y="529"><tspan fill="#F2B441">PK</tspan> id · reference</text>
+      <text x="684" y="543">supplier_id</text>
+      <text x="684" y="557">date</text>
+      <text x="684" y="571">state</text>
+    </g></g>
+
+  <!-- reception_line -->
+  <g><rect x="670" y="610" width="270" height="112" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="670" y="610" width="270" height="27" rx="8" fill="#2B2033"/><rect x="670" y="629" width="270" height="8" fill="#2B2033"/>
+    <line x1="670" y1="637" x2="940" y2="637" stroke="#3A2E44"/>
+    <text x="684" y="628" fill="#EFE7F0" font-size="12" font-weight="700">reception_line</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="684" y="655"><tspan fill="#F2B441">PK</tspan> id</text>
+      <text x="684" y="669"><tspan fill="#8A5E80">FK</tspan> reception_id → reception</text>
+      <text x="684" y="683"><tspan fill="#8A5E80">FK</tspan> product_id → product</text>
+      <text x="684" y="697">quantity · uom_id (saisie)</text>
+      <text x="684" y="711"><tspan fill="#8A5E80">FK</tspan> lot_id → lot</text>
+    </g></g>
+</svg>
+</div>
+<div class="legend">
+  <span><b style="color:#F2B441">PK</b> clé primaire</span>
+  <span><b style="color:#8A5E80">FK</b> clé étrangère</span>
+  <span><b style="color:#F2B441">— génère →</b> ne modifie pas le stock, crée des mouvements</span>
+  <span><b style="color:#E97393">rose</b> = le contenant</span>
+</div>
+
+<div class="sec-head">La caisse · ses 3 vies</div>
+<div class="steps">
+  <div class="step">
+    <span class="n">01</span>
+    <h4>Elle est fabriquée</h4>
+    <p>Un <code>work_order</code> lit la <code>bom</code> de la caisse et génère les mouvements : planches <code>Entrepôt → Production</code>, puis caisse <code>Production → Entrepôt</code>. La caisse est un <b>product</b> comme un autre, en <code>tracking = SERIAL</code>.</p>
+  </div>
+  <div class="step">
+    <span class="n">02</span>
+    <h4>Elle devient contenant</h4>
+    <p>Un <code>package</code> est créé, pointant vers le product caisse + son <code>lot</code> (n° de série). Il existe désormais un objet physique identifiable, vide, posé quelque part.</p>
+  </div>
+  <div class="step">
+    <span class="n">03</span>
+    <h4>Elle est remplie</h4>
+    <p>Mettre un article dedans = un mouvement <b>même emplacement</b>, avec <code>dest_package_id = P</code>. Rien de neuf : c'est encore un <code>stock_move</code>.</p>
+  </div>
+</div>
+
+<div class="sec-head">Les règles qui tiennent le modèle</div>
+<div class="rules">
+  <div class="rule"><span class="k">FLUX</span><span class="b"><b>Une seule mécanique.</b> Achat, vente, production, casse, mise en caisse : tout est un <code>stock_move</code>. Le sens vient des emplacements (dont les virtuels <code>FOURNISSEUR</code>, <code>CLIENT</code>, <code>PRODUCTION</code>, <code>PERTE</code>), jamais d'un signe ni d'un type en dur.</span></div>
+  <div class="rule"><span class="k">STOCK</span><span class="b"><b>Jamais stocké, toujours dérivé.</b> Entrées moins sorties sur les mouvements <code>DONE</code>. Gratuitement : le stock à n'importe quelle date passée, et le distinguo physique (<code>DONE</code>) / prévisionnel (<code>DONE + DRAFT</code>).</span></div>
+  <div class="rule"><span class="k">CONTENU</span><span class="b"><b>Le contenu d'une caisse est dérivé lui aussi.</b> Somme des mouvements entrants dans le package moins les sortants. Aucune table de contenu à maintenir, aucune désynchro possible.</span></div>
+  <div class="rule"><span class="k">POIDS</span><span class="b"><b>Cascade de précision.</b> Poids pesé sur le lot → sinon densité corrigée par l'humidité mesurée → sinon densité nominale du <code>material</code>. Toujours une réponse, à la meilleure précision disponible.</span></div>
+  <div class="rule"><span class="k">CHARGE</span><span class="b"><b>Contrôle au remplissage.</b> Σ poids du contenu ≤ <code>payload_max_kg</code> de la caisse. Poids brut expédié = <code>tare_kg</code> + contenu. C'est ce qui alimente le bon de transport.</span></div>
+  <div class="rule"><span class="k">IMMUABLE</span><span class="b"><b>On n'édite ni ne supprime un mouvement validé.</b> Erreur → mouvement inverse. L'historique devient un journal auditable, comme une écriture comptable.</span></div>
+  <div class="rule"><span class="k">TENANT</span><span class="b"><b>Aucune colonne <code>tenant_id</code>.</b> L'isolation est portée par le schéma Postgres (un schéma par client). Le modèle reste propre, et un oubli de filtre est structurellement impossible.</span></div>
+</div>
+
+<pre><span class="c">-- Contenu d'une caisse : dérivé, comme le stock</span>
+<span class="k">SELECT</span> product_id, lot_id,
+       <span class="k">SUM</span>(<span class="k">CASE WHEN</span> dest_package_id   = :pkg <span class="k">THEN</span> quantity <span class="k">ELSE</span> 0 <span class="k">END</span>)
+     - <span class="k">SUM</span>(<span class="k">CASE WHEN</span> source_package_id = :pkg <span class="k">THEN</span> quantity <span class="k">ELSE</span> 0 <span class="k">END</span>) <span class="k">AS</span> qty
+<span class="k">FROM</span> stock_move
+<span class="k">WHERE</span> state = <span style="color:#54D6C2">'DONE'</span>
+  <span class="k">AND</span> (dest_package_id = :pkg <span class="k">OR</span> source_package_id = :pkg)
+<span class="k">GROUP BY</span> product_id, lot_id
+<span class="k">HAVING</span> <span class="k">SUM</span>(...) &gt; 0;</pre>
+
+<footer>
+  <b>Index à prévoir</b> — <code>stock_move</code> : (product_id, state, effective_date), (dest_location_id, state), (source_location_id, state), (dest_package_id), (source_package_id). C'est la table qui grossit, tout le reste est du référentiel.<br>
+  <b>Quand ça ralentira</b> — table de snapshot (stock figé à une date de clôture) et recalcul du seul delta depuis. À faire le jour où la lenteur se voit, pas avant.
+</footer>
+
+</body>
+</html>

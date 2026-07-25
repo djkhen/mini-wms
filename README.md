@@ -29,6 +29,8 @@ et le modèle métier**, **jamais** le code ni les données réelles.
 mini-wms/
 ├── NOTES-DEV.md                   Journal de dev (chronologique) — à lire en 1er
 ├── docs/
+│   ├── conception-plateforme.md   Vision, périmètre, modèle (Fluxo) — doc vivant
+│   ├── ARCHI-DEPLOY.md            Déploiement, multi-tenant, provisioning (ops)
 │   ├── migration-wms-scoping.md   Cadrage : domaine, schéma ER, décisions
 │   └── legacy-analysis.md         Reverse anonymisé des sources legacy
 ├── _legacy/                       PHP source (LOCAL, gitignoré)
@@ -43,10 +45,11 @@ mini-wms/
 docker compose up --build          # API sur http://localhost:8080
 
 # Ou en dev (Postgres local sur 5432, base wmsdb/wms/wms) :
-cd backend && mvn quarkus:dev      # API sur http://localhost:8080
+cd backend && ./gradlew quarkusDev # API sur http://localhost:8080
 ```
 
-Swagger UI : `/q/swagger-ui`. Endpoints actuels : `GET/POST/PUT/DELETE /emplacements`.
+Swagger UI : `/q/swagger-ui`. Endpoints actuels : `/emplacements` (GET/POST/PUT/DELETE)
+et `/articles` (GET/POST/PUT/PATCH/DELETE).
 
 ## Méthode de migration
 
