@@ -21,6 +21,44 @@ Notes chronologiques (décisions, blocages, idées). Le plus récent en haut.
 
 ---
 
+## 2026-07-25 — Article : CRUD complet + PUT vs PATCH (maj complète vs partielle)
+
+**Contexte** : `ArticleResource` a maintenant le CRUD entier + **les deux** manières
+de modifier. La distinction PUT/PATCH est une brique réutilisable (elle reviendra sur
+stock_move, réception, OF…).
+
+**Le piège du PUT** : un PUT = remplacement **COMPLET**, le client envoie l'objet
+ENTIER. Un champ **omis** est écrasé à son défaut/null → un enum (`tracabilite`) ou un
+`boolean actif` absent est réinitialisé **en silence**. Un PUT n'est donc PAS fait pour
+une modif partielle.
+
+**Le PATCH propre** (Quarkus/Jackson) — on **fusionne** le JSON reçu sur l'entité DÉJÀ
+chargée, au lieu de recopier champ par champ :
+```java
+@Inject ObjectMapper mapper;                     // fusionne un JSON partiel sur une entité
+
+@PATCH @Path("/{id}") @Transactional
+public ArticleDto modifierPartiel(@PathParam("id") Long id, JsonNode patch) throws IOException {
+    Article a = Article.findById(id);
+    if (a == null) throw new WebApplicationException("Article " + id + " introuvable", 404);
+    if (patch instanceof ObjectNode o) o.remove("id");                 // jamais toucher la PK
+    mapper.readerForUpdating(a).readValue(mapper.treeAsTokens(patch));  // absent = INCHANGÉ
+    valider(a);                                                        // valider APRÈS fusion
+    // ... unicité reference sur un AUTRE id (409) ...
+    return ArticleDto.de(a);                                           // dirty checking -> UPDATE
+}
+```
+
+**Points appris**
+- `readerForUpdating(entité)` = la clé : seuls les champs **présents** dans le JSON sont
+  écrits, les absents restent intacts (pas d'écrasement silencieux, contrairement au PUT).
+- **Sécurité** : retirer `id` du patch (`ObjectNode.remove("id")`) — on ne change jamais la PK via le corps.
+- **Valider APRÈS** la fusion (l'objet fusionné doit rester valide), pas avant.
+- `@PATCH` vient de `jakarta.ws.rs.*` (Jakarta REST 3.1+, dispo en Quarkus 3.x).
+- Convention de nommage retenue : **`modifierComplet`** (PUT) / **`modifierPartiel`** (PATCH).
+- Testé : PATCH d'un seul champ → les autres (`description`/`tracabilite`/`actif`) INTACTS ; 404 sur id inconnu ; PUT complet OK.
+- Variante possible (non retenue ici) : `@JsonSetter(nulls = Nulls.SKIP)` sur les champs.
+
 ## 2026-07-05 — ⭐ RECETTE LIQUIBASE (mise en place + usage quotidien)
 
 **Pourquoi** : `hibernate-orm.database.generation=update` laissait Hibernate modifier
