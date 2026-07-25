@@ -121,6 +121,43 @@ gagne un champ **`family`** (migration 003) ; le stock devient une **vue d'agré
 plus tard, cf. pied de page du schéma). Le modèle `tracabilite-model.java` est **révisé** en conséquence
 (son `Stock`-compteur → dérivé).
 
+## 6quater. 📐 Modèle UoM — pivot + référentiel (nailé 2026-07-25, session concept)
+
+Prolonge le §6ter : le `stock_move` porte une `uom` — voici **quelle** unité, et **d'où** vient la conversion.
+
+**Le pivot (`stock_uom`)** — chaque `article` a **UNE** unité de stock, choisie une fois. **Tous** ses
+`stock_move` sont comptés dans cette unité → la dérivation `Σ mouvements` reste une **addition bête**, jamais
+une conversion à la lecture. Règle de choix : *« dans quelle unité je compterais ce stock à la main dans
+l'entrepôt ? »*. Conversion = **une étoile** (chaque unité déclare 1 facteur vers le pivot), pas une toile N².
+> ⚠️ Deux pivots à ne pas confondre : **pivot de catégorie** (réf. mathématique d'une famille : le mètre
+> pour les longueurs) vs **pivot de l'article** (`stock_uom`, choix métier par article). Le 1er rend les
+> conversions possibles ; le 2ᵉ rend la somme des mouvements cohérente.
+
+**quantité × unité = mesure** — l'unité qualifie **le nombre saisi**, pas « un objet ». `100 + unité` = 100
+pièces ; `3 + colis` = 3 pas de « colis ». À la saisie (réception…), l'opérateur choisit **quelle unité +
+combien** ; il **ne tape JAMAIS le taux** (déjà en base). On convertit **à l'écriture** → le mouvement est
+stocké dans le `stock_uom`.
+
+**Où vit le facteur de conversion** (le « 50 » de 1 colis = 50 pièces) — **3 cas** :
+| Type | Le facteur est… | Où |
+|---|---|---|
+| Ratio **universel** (douzaine=12, m=100 cm) | défini une fois, **global** | table `uom` (ratio vers pivot de catégorie) |
+| **Conditionnement propre à l'article** (colis=50 pour CET article) | défini une fois, **par article** | `packaging` lié au produit (≠ `uom` : un facteur d'`uom` est global, ne peut pas être « 50 ici, 24 là ») |
+| **Calculé** (unité→m² bois) | **calculé** à la volée | dérivé des **dimensions** article/lot (`larg×long`) |
+
+**Référentiel vs mouvement** — le facteur est une **donnée du référentiel** : définie **AVANT** l'exploitation,
+par un **admin du client** (l'éditeur pré-charge un socle : unités SI, catégories), **en table**, stable.
+L'opérateur/la réception ne fait que **la lire**. Chaîne de dépendance : `uom_category → uom → article
+(+stock_uom) → packaging → PUIS reception/stock_move`. Format **récurrent** → référentiel (code propre :
+`COLIS-50`, `COLIS-45`) ; **cas ponctuel** (un colis dépareillé de 45 exceptionnel) → **saisie sur la
+ligne/le lot**, JAMAIS une entrée référentiel (sinon poubelle : `COLIS-37`, `COLIS-48`…). Principe général :
+un **taux** est du référentiel stable (→ table), un **stock** est un résultat calculé (→ jamais de compteur).
+
+**Impact CODE** : `reception_line.uom_id` = unité de saisie (≠ `stock_uom` OK, mais **même catégorie**,
+convertible) → conversion → `stock_move` en `stock_uom`. `stock_move.uom_id` = **toujours** le `stock_uom`
+(le champ existe pour l'explicite/robustesse ; vaut `article.stock_uom` ~99 % des cas). Angle bois = le
+différenciateur : contrôle réception (poids théorique dims×densité vs pesé) tombe de la cascade de poids §6ter.
+
 ## 7. Récit de migration (Uniface → moderne) — **argument portfolio**
 - **Legacy** : monolithe **Uniface** (GPAO **+** WMS même base), rustines (caisse virtuelle pour négoce),
   éditions Crystal Report, intégration Sage X3.
