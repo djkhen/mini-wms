@@ -26,7 +26,7 @@ import java.util.List;
  *
  * Tous les endpoints sont sous /emplacements et échangent du JSON.
  *
- *  GET    /emplacements                   liste (filtres ?zone= &type= &actif=)
+ *  GET    /emplacements                   liste (filtres ?code= &zone= &type= &actif=)
  *  GET    /emplacements/{id}              détail
  *  POST   /emplacements                   création (201)
  *  PUT    /emplacements/{id}              modification
@@ -41,11 +41,13 @@ public class EmplacementResource {
     // @Transactional : le mapping vers DTO parcourt les entités pendant que la session est ouverte.
     @GET
     @Transactional
-    public List<EmplacementDto> liste(@QueryParam("zone") String zone,
+    public List<EmplacementDto> liste(@QueryParam("code") String code,
+                                      @QueryParam("zone") String zone,
                                       @QueryParam("type") TypeEmplacement type,
                                       @QueryParam("actif") Boolean actif) {
         StringBuilder where = new StringBuilder("1=1");
         Parameters params = new Parameters();
+        if (code != null)  { where.append(" and code = :code");   params.and("code", code); }
         if (zone != null)  { where.append(" and zone = :zone");   params.and("zone", zone); }
         if (type != null)  { where.append(" and type = :type");   params.and("type", type); }
         if (actif != null) { where.append(" and actif = :actif"); params.and("actif", actif); }
