@@ -6,9 +6,20 @@
 > 🔻 **Deux étages** : d'abord le **reste-à-faire actionnable** (tâches concrètes, court terme) ;
 > ensuite le **bac à idées / vision** (plus loin, à mûrir).
 
-## 🔧 Reste-à-faire actionnable (à jour 2026-07-25)
+## 🔧 Reste-à-faire actionnable (à jour 2026-07-26)
 
-### ✅ Finition Emplacement — FAIT le 2026-07-25 (branche `feature/finition-emplacement`)
+### ▶️ PROCHAINE SESSION (prévu 2026-07-27) — Flutter : Emplacements + menu
+> Point de reprise. On avance côté **front Flutter** (certif = ancre).
+1. [ ] **Clore l'écran Article** : rafraîchir Chrome, VÉRIFIER que les 6 articles s'affichent → puis
+       **merger** `feature/mobile-init-article-list` dans `main` (ce merge apporte aussi le fix CORS regex).
+       *(Le code compile ; il ne manque que la confirmation visuelle. Lancer : backend Docker up, puis
+       `cd mobile && flutter run -d chrome` — n'importe quel port localhost passe grâce à la regex CORS.)*
+2. [ ] **Écran Emplacements** en Flutter — branche `feature/mobile-init-emplacement-list` (créée depuis
+       `main` après le merge). Liste sur le modèle de l'écran Article (`GET /emplacements`, DTO déjà prêt).
+3. [ ] **Menu / navigation** — permettre de basculer entre l'écran **Articles** et l'écran **Emplacements**
+       (Drawer latéral ou BottomNavigationBar). Base du futur dashboard (⚠️ PAS le dashboard configurable, cf. §10).
+
+### ✅ Finition Emplacement (backend) — FAIT le 2026-07-25 (branche `feature/finition-emplacement`)
 - [x] **CRUD en DTO** (`EmplacementDto` + mapper `de()`) — l'API n'expose plus l'entité brute.
 - [x] **Filtre `?code=`** sur la liste (lookup par identifiant métier, cohérent avec Article).
 - [x] **Javadoc fantôme** nettoyé dans `Emplacement.findByCode`.
