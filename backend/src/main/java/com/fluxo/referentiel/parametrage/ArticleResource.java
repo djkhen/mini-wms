@@ -2,11 +2,16 @@ package com.fluxo.referentiel.parametrage;
 
 import com.fluxo.referentiel.domain.Article;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,13 +24,17 @@ import java.util.Map;
  *  GET    /articles        liste (filtres ?reference= &designation= &tracabilite= &actif=)
  *  GET    /articles/{id}   détail
  *  POST   /articles        création (201)
- *  PUT    /articles/{id}   modification
+ *  PUT    /articles/{id}   modification COMPLÈTE (remplace tout)
+ *  PATCH  /articles/{id}   modification PARTIELLE (seuls les champs envoyés changent)
  *  DELETE /articles/{id}   suppression (204)
  */
 @Path("/articles")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class ArticleResource {
+
+    @Inject
+    ObjectMapper mapper;   // sert à fusionner un JSON partiel sur une entité (PATCH)
 
     // GET /articles -> liste filtrable. @BeanParam regroupe les critères d'URL dans un objet.
     // @Transactional : le mapping vers DTO parcourt les entités pendant que la session est ouverte.
@@ -90,11 +99,11 @@ public class ArticleResource {
         return Response.status(Response.Status.CREATED).entity(ArticleDto.de(article)).build();
     }
 
-    // PUT /articles/{id} -> met à jour un article
+    // PUT /articles/{id} -> modification COMPLÈTE (le client envoie l'article entier ; remplace tout)
     @PUT
     @Path("/{id}")
     @Transactional
-    public ArticleDto modifier(@PathParam("id") Long id, Article data) {
+    public ArticleDto modifierComplet(@PathParam("id") Long id, Article data) {
         Article article = Article.findById(id);
         if (article == null) {
             throw new WebApplicationException("Article " + id + " introuvable", 404);
@@ -113,6 +122,33 @@ public class ArticleResource {
         article.tracabilite = data.tracabilite;
         article.actif = data.actif;
         return ArticleDto.de(article); // dirty checking Hibernate -> UPDATE au commit
+    }
+
+    // PATCH /articles/{id} -> mise à jour PARTIELLE : seuls les champs PRÉSENTS dans le JSON changent
+    // (contrairement au PUT qui remplace tout). Jackson FUSIONNE le JSON reçu sur l'entité déjà chargée
+    // via readerForUpdating -> les champs absents restent inchangés (pas d'écrasement silencieux).
+    @PATCH
+    @Path("/{id}")
+    @Transactional
+    public ArticleDto modifierPartiel(@PathParam("id") Long id, JsonNode patch) throws IOException {
+        Article article = Article.findById(id);
+        if (article == null) {
+            throw new WebApplicationException("Article " + id + " introuvable", 404);
+        }
+        // Sécurité : on n'autorise JAMAIS à changer l'id (clé primaire) via le corps.
+        if (patch instanceof ObjectNode obj) {
+            obj.remove("id");
+        }
+        // Fusionne SEULEMENT les champs présents du JSON sur l'entité gérée.
+        mapper.readerForUpdating(article).readValue(mapper.treeAsTokens(patch));
+        // L'article FUSIONNÉ doit rester valide, et sa référence unique sur un AUTRE article.
+        valider(article);
+        Article homonyme = Article.findByReference(article.reference);
+        if (homonyme != null && !homonyme.id.equals(id)) {
+            throw new WebApplicationException(
+                    "La référence '" + article.reference + "' existe déjà", 409);
+        }
+        return ArticleDto.de(article);
     }
 
     // DELETE /articles/{id} -> supprime un article
