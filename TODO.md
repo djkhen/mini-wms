@@ -6,23 +6,29 @@
 > 🔻 **Deux étages** : d'abord le **reste-à-faire actionnable** (tâches concrètes, court terme) ;
 > ensuite le **bac à idées / vision** (plus loin, à mûrir).
 
-## 🔧 Reste-à-faire actionnable (à jour 2026-07-26)
+## 🔧 Reste-à-faire actionnable (à jour 2026-07-27)
 
-### ▶️ PROCHAINE SESSION (prévu 2026-07-27) — Flutter : Emplacements + menu
-> Point de reprise. On avance côté **front Flutter** (certif = ancre).
-1. [ ] **Clore l'écran Article** : rafraîchir Chrome, VÉRIFIER que les 6 articles s'affichent → puis
-       **merger** `feature/mobile-init-article-list` dans `main` (ce merge apporte aussi le fix CORS regex).
-       *(Le code compile ; il ne manque que la confirmation visuelle. Lancer : backend Docker up, puis
-       `cd mobile && flutter run -d chrome` — n'importe quel port localhost passe grâce à la regex CORS.)*
-2. [ ] **Écran Emplacements** en Flutter — branche `feature/mobile-init-emplacement-list` (créée depuis
-       `main` après le merge). Liste sur le modèle de l'écran Article (`GET /emplacements`, DTO déjà prêt).
-3. [ ] **Menu / navigation** — permettre de basculer entre l'écran **Articles** et l'écran **Emplacements**
-       (Drawer latéral ou BottomNavigationBar). Base du futur dashboard (⚠️ PAS le dashboard configurable, cf. §10).
+### ✅ FAIT — session 2026-07-27 (front Flutter ; branches mergées dans `main`)
+- [x] **Écran Emplacements** (liste mobile, `GET /emplacements`).
+- [x] **Menu** de navigation (`NavigationRail`) — Accueil / Articles / Emplacements, construit depuis une **liste de données** `_sections`.
+- [x] **Écran détail Article** (`Navigator.push`/`pop` — fiche complète + flèche retour).
+- [x] **Menu ADAPTATIF** (`NavigationRail` desktop / `Drawer` mobile via `LayoutBuilder`, seuil 600 px) ; pages passées en « contenu pur » (coquille = AppBar+menu).
+- [x] **Support Android** (URL `10.0.2.2` selon plateforme + cleartext debug) → Fluxo tourne sur **web + Android**.
+- [x] 🕵️ Plugin **FlutterAssetsGenerator DÉSACTIVÉ** (il corrompait `pubspec` + créait `assets.dart`) ; `lib/generated/` gitignoré + exclu de l'analyse.
+
+### ▶️ PROCHAINE SESSION — au choix (le front couvre déjà menu adaptatif + listes + détail)
+> Point de reprise. Backend complet + appli Flutter (web+Android). Options :
+1. [ ] **Détail Emplacement** — même patron que le détail Article → à **coder soi-même** (bon exercice certif).
+2. [ ] **GetIt** (refactor) — UN seul `Dio`/`ApiService` partagé + splitter en `ArticleService`/`EmplacementService`
+       (l'`ApiService()` recréé dans chaque page commence à se répéter). Cf. roadmap §GetIt ci-dessous.
+3. [ ] **Backend — pivot flux** : `stock_move` (stock dérivé) OU migration 003 `family` sur Article (§6ter conception).
+4. [ ] 🧹 **Ménage branches** : supprimer les vieilles branches déjà mergées (mobile-init-article-list,
+       -emplacement-list, -menu, detail-article, menu-adaptatif, referentiel-article, finition-emplacement, article-seed…).
 
 ### 🏗️ Architecture Flutter à venir — dans l'ordre (chaque notion QUAND le besoin arrive, pas avant)
 > Feuille de route mobile. Principe **YAGNI** : on introduit chaque brique quand la **douleur** apparaît.
-1. [ ] **Routes / Navigation** — passer d'un écran à l'autre. **Déclencheur : le menu** (naviguer
-       Articles ↔ Emplacements). Commencer simple (`Navigator` + Drawer / BottomNavigationBar) ; `go_router` plus tard.
+1. [x] ~~**Routes / Navigation**~~ ✅ FAIT (2026-07-27) : menu `NavigationRail`/`Drawer` **adaptatif** + `Navigator.push`/`pop`
+       (écran détail). `go_router` plus tard, si le routing se complexifie (deep links, URL web propres…).
    - 📐 **Structure du menu (idée user 2026-07-27) — à appliquer quand le menu grossit** : le menu = une
      **liste de GROUPES**, chacun avec ses sous-écrans → 1er niveau petit et scalable. **Grouper par domaine,
      en miroir des packages backend** : **Paramétrage** (Article, Emplacement, Unités, Fournisseurs — cf. les
