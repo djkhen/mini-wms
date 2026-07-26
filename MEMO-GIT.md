@@ -27,3 +27,27 @@ git push origin --delete ancien-nom
 ```
 
 🧠 Mnémotechnique : `-m` comme *move* — la même idée que `mv` pour renommer un fichier.
+
+---
+
+## `git pull` prend un dépôt DISTANT (remote), pas une branche
+
+⚠️ `git pull main` → **erreur** : `'main' does not appear to be a git repository`.
+`git pull` attend le nom d'un **remote** (le dépôt distant, souvent `origin`), **PAS** un nom de branche.
+
+- ✅ `git pull` — met à jour la branche courante depuis son remote suivi.
+- ✅ `git pull origin main` — tire la branche `main` depuis le remote `origin`.
+- ❌ `git pull main` — git croit que `main` est un dépôt distant → échoue (mais **rien n'est cassé**).
+
+---
+
+## Fusionner une branche dans la branche courante — `git merge`
+
+Pour amener les commits d'une **autre branche** dans celle où tu es :
+```
+git merge nom-de-la-branche
+```
+Exemple : sur `feature/xxx`, faire `git merge main` récupère tout ce qui est sur `main`.
+Si la branche courante n'a pas divergé → « **Fast-forward** » (elle avance, sans commit de merge).
+
+🧠 Résumé : **`pull` = un REMOTE** (réseau, ex. `origin`) · **`merge` = une BRANCHE** (local).
