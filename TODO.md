@@ -23,6 +23,13 @@
 > Feuille de route mobile. Principe **YAGNI** : on introduit chaque brique quand la **douleur** apparaît.
 1. [ ] **Routes / Navigation** — passer d'un écran à l'autre. **Déclencheur : le menu** (naviguer
        Articles ↔ Emplacements). Commencer simple (`Navigator` + Drawer / BottomNavigationBar) ; `go_router` plus tard.
+   - 📐 **Structure du menu (idée user 2026-07-27) — à appliquer quand le menu grossit** : le menu = une
+     **liste de GROUPES**, chacun avec ses sous-écrans → 1er niveau petit et scalable. **Grouper par domaine,
+     en miroir des packages backend** : **Paramétrage** (Article, Emplacement, Unités, Fournisseurs — cf. les
+     packages `*.parametrage`) · **Flux** (Réception, Expédition, Inventaire) · **Production/GPAO** (OF, Gammes)
+     · **Dashboard** · **IA**. Le **même modèle de données** alimente `NavigationRail` (desktop) **ET** `Drawer`
+     (mobile) → **adaptatif** selon la largeur d'écran, sans réécriture. ⚠️ Le mobile garde **TOUT** (juste
+     présenté autrement). Aujourd'hui : menu **plat** (2 écrans) mais **structuré en données** pour évoluer vers ça.
 2. [ ] **GetIt** (service locator / injection de dépendances) — avoir **UN seul** `ApiService` partagé au
        lieu d'en recréer un dans chaque page. **Déclencheur** : la répétition `ApiService()` devient agaçante (2-3 écrans).
 3. [ ] **State management — Provider OU Riverpod** (à trancher le moment venu) — partager un état entre
