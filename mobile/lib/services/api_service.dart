@@ -1,9 +1,22 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart'; // kIsWeb, defaultTargetPlatform (marchent PARTOUT, contrairement à dart:io)
 
 import '../models/article.dart';
 import '../models/emplacement.dart';
 
-/// Point d'accès UNIQUE à l'API backend (Quarkus, http://localhost:8080).
+/// URL de base du backend, choisie SELON LA PLATEFORME.
+/// ⚠️ Sur l'émulateur Android, `localhost` = l'émulateur, PAS le PC → il faut `10.0.2.2`
+/// pour joindre le backend qui tourne sur l'hôte. (Un vrai téléphone = l'IP LAN du PC : plus tard.)
+/// Web / desktop : `localhost` convient. NB : pas de CORS sur mobile (ce n'est pas un navigateur).
+String _urlDeBase() {
+  if (kIsWeb) return 'http://localhost:8080'; // web (Chrome)
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    return 'http://10.0.2.2:8080'; // émulateur Android
+  }
+  return 'http://localhost:8080'; // desktop / iOS
+}
+
+/// Point d'accès UNIQUE à l'API backend (Quarkus).
 ///
 /// On centralise Dio ici : l'URL de base et (plus tard) les intercepteurs
 /// (token Keycloak, gestion d'erreurs, logs) ne se configurent qu'à UN endroit.
@@ -12,9 +25,7 @@ class ApiService {
   ApiService()
       : _dio = Dio(
           BaseOptions(
-            // ⚠️ En web (Chrome) sur ta machine, le backend est sur localhost:8080.
-            // Lancer l'appli sur --web-port=5000 (déjà autorisé par le CORS backend).
-            baseUrl: 'http://localhost:8080',
+            baseUrl: _urlDeBase(), // localhost (web/desktop) ou 10.0.2.2 (émulateur Android)
             connectTimeout: const Duration(seconds: 5),
             receiveTimeout: const Duration(seconds: 5),
           ),

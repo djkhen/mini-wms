@@ -4,4 +4,9 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- DEV UNIQUEMENT : autorise le HTTP non-sécurisé (cleartext) vers le backend local.
+         Android 9+ (API 28+) le bloque par défaut. Ne concerne QUE les builds debug
+         (ce fichier) → en prod (release) on reste en HTTPS, rien à changer côté sécurité. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>
