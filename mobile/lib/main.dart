@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'pages/emplacements_page.dart';
+import 'pages/home_shell.dart';
 
 void main() {
   runApp(const FluxoApp());
@@ -19,9 +19,8 @@ class FluxoApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
       ),
-      // ⚠️ TEMPORAIRE : on affiche l'écran Emplacements pour le tester.
-      // Étape suivante (le menu) : l'accueil donnera accès aux DEUX écrans (Articles + Emplacements).
-      home: const EmplacementsPage(),
+      // Accueil = la COQUILLE (menu NavigationRail + contenu) : donne accès à toutes les sections.
+      home: const HomeShell(),
     );
   }
 }
