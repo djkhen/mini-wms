@@ -87,3 +87,33 @@ y est (pas de merge). Mais si tu passes sur `main`, `main` ne l'a pas → **merg
 ⚡ Détail malin : après un merge, le `push` de `main` est souvent **minuscule** (« 1 object ») — les fichiers étaient
 déjà sur le remote (poussés via la feature branch). Git ne re-téléverse jamais ce qu'il a déjà ; seul le **commit de
 merge** (un petit pointeur) est nouveau.
+
+---
+
+## 🔄 LE CYCLE COMPLET — workflow feature-branch (à garder sous les yeux)
+
+Le cycle par défaut, du début jusqu'à GitHub :
+
+```
+main local
+   │   git checkout -b feature/x        ← créer LA branche + aller dessus
+   ▼
+feature/x
+   │   git add .  /  git commit -m "…"   ← travailler (1 ou plusieurs commits)
+   │   git push -u origin feature/x      ← (optionnel) sauver la branche sur le remote
+   │
+   │   git checkout main                 ← ⚠️ REVENIR sur main D'ABORD
+   │   git merge --no-ff feature/x       ← amener la branche DANS main local
+   ▼
+main local (à jour)
+   │   git push                          ← envoyer main sur le remote
+   ▼
+main remote (à jour) 🎉
+```
+
+🧠 Les **2 `checkout`** sont la clé :
+- `checkout -b feature/x` au début → **crée** la branche ET s'y **déplace**.
+- `checkout main` avant de merger → on merge **TOUJOURS depuis la cible** (*je suis SUR main, je nomme la source*).
+
+💡 Rappels transverses : `commit` = sauve sur la branche courante · `push` = envoie **seulement** la branche
+courante sur son remote · `merge` = relie les branches. On met `main` à jour en **allant dessus**.
