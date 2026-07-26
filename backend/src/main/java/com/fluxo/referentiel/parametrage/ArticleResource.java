@@ -130,7 +130,7 @@ public class ArticleResource {
     @PATCH
     @Path("/{id}")
     @Transactional
-    public ArticleDto modifierPartiel(@PathParam("id") Long id, JsonNode patch) throws IOException {
+    public ArticleDto modifierPartiel(@PathParam("id") Long id, JsonNode patch){ // throws IOException {
         Article article = Article.findById(id);
         if (article == null) {
             throw new WebApplicationException("Article " + id + " introuvable", 404);
@@ -140,7 +140,15 @@ public class ArticleResource {
             obj.remove("id");
         }
         // Fusionne SEULEMENT les champs présents du JSON sur l'entité gérée.
-        mapper.readerForUpdating(article).readValue(mapper.treeAsTokens(patch));
+        // mapper.readerForUpdating(article).readValue(mapper.treeAsTokens(patch));
+        try {
+            mapper.readerForUpdating(article)
+                    .readValue(mapper.treeAsTokens(patch));
+        } catch (IOException e) {
+            throw new WebApplicationException("Le JSON fourni est invalide.", 400);
+        }
+
+
         // L'article FUSIONNÉ doit rester valide, et sa référence unique sur un AUTRE article.
         valider(article);
         Article homonyme = Article.findByReference(article.reference);
