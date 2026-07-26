@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../models/article.dart';
+import '../models/emplacement.dart';
 
 /// Point d'accès UNIQUE à l'API backend (Quarkus, http://localhost:8080).
 ///
@@ -28,6 +29,15 @@ class ApiService {
     final data = reponse.data as List<dynamic>;
     return data
         .map((json) => Article.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// `GET /emplacements` -> la liste des emplacements. Même patron que getArticles().
+  Future<List<Emplacement>> getEmplacements() async {
+    final reponse = await _dio.get('/emplacements');
+    final data = reponse.data as List<dynamic>;
+    return data
+        .map((json) => Emplacement.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 }

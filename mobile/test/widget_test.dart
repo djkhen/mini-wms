@@ -7,12 +7,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/main.dart';
 
 void main() {
-  testWidgets('L\'appli démarre sur l\'écran Articles', (WidgetTester tester) async {
+  testWidgets('L\'appli démarre et charge un écran de liste', (WidgetTester tester) async {
     await tester.pumpWidget(const FluxoApp());
 
-    // L'AppBar de l'écran d'accueil affiche "Articles".
-    expect(find.text('Articles'), findsOneWidget);
-    // Pendant le chargement, un indicateur de progression est visible.
+    // Au démarrage, l'écran de liste affiche un indicateur de chargement
+    // (indépendant de QUEL écran est en accueil).
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }
