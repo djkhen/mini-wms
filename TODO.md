@@ -19,6 +19,16 @@
 3. [ ] **Menu / navigation** — permettre de basculer entre l'écran **Articles** et l'écran **Emplacements**
        (Drawer latéral ou BottomNavigationBar). Base du futur dashboard (⚠️ PAS le dashboard configurable, cf. §10).
 
+### 🏗️ Architecture Flutter à venir — dans l'ordre (chaque notion QUAND le besoin arrive, pas avant)
+> Feuille de route mobile. Principe **YAGNI** : on introduit chaque brique quand la **douleur** apparaît.
+1. [ ] **Routes / Navigation** — passer d'un écran à l'autre. **Déclencheur : le menu** (naviguer
+       Articles ↔ Emplacements). Commencer simple (`Navigator` + Drawer / BottomNavigationBar) ; `go_router` plus tard.
+2. [ ] **GetIt** (service locator / injection de dépendances) — avoir **UN seul** `ApiService` partagé au
+       lieu d'en recréer un dans chaque page. **Déclencheur** : la répétition `ApiService()` devient agaçante (2-3 écrans).
+3. [ ] **State management — Provider OU Riverpod** (à trancher le moment venu) — partager un état entre
+       écrans, cache, chargement, token Keycloak. **Déclencheur** : un `FutureBuilder` par écran ne suffit plus.
+       Reco pressentie : **Riverpod** (standard moderne, testable) ; Provider = plus simple à apprendre d'abord.
+
 ### ✅ Finition Emplacement (backend) — FAIT le 2026-07-25 (branche `feature/finition-emplacement`)
 - [x] **CRUD en DTO** (`EmplacementDto` + mapper `de()`) — l'API n'expose plus l'entité brute.
 - [x] **Filtre `?code=`** sur la liste (lookup par identifiant métier, cohérent avec Article).
