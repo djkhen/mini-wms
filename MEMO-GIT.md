@@ -51,3 +51,18 @@ Exemple : sur `feature/xxx`, faire `git merge main` récupère tout ce qui est s
 Si la branche courante n'a pas divergé → « **Fast-forward** » (elle avance, sans commit de merge).
 
 🧠 Résumé : **`pull` = un REMOTE** (réseau, ex. `origin`) · **`merge` = une BRANCHE** (local).
+
+---
+
+## Quand ai-je BESOIN de `git merge` ? (règle simple)
+
+**`git merge <branche>` = amener les commits d'une AUTRE branche dans celle où JE SUIS.**
+
+- ✅ Le commit est **déjà sur ma branche courante** (je l'y ai fait) → **PAS de merge**, il est là, je `push`.
+- 🔀 Le commit est sur une **AUTRE branche** et je le veux ici → `git merge <cette-branche>`.
+
+Les **2 sens** (toujours : je suis **SUR la cible**, je nomme **la source**) :
+- **Mettre à jour ma feature avec `main`** : sur ma feature → `git merge main`.
+- **Intégrer ma feature finie dans `main`** : sur `main` → `git merge feature-xxx`.
+
+🧠 Résumé : **merge = « je veux ICI les commits de LÀ-BAS ».** Si « là-bas » = « ici », pas besoin.
