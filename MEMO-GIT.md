@@ -66,3 +66,24 @@ Les **2 sens** (toujours : je suis **SUR la cible**, je nomme **la source**) :
 - **Intégrer ma feature finie dans `main`** : sur `main` → `git merge feature-xxx`.
 
 🧠 Résumé : **merge = « je veux ICI les commits de LÀ-BAS ».** Si « là-bas » = « ici », pas besoin.
+
+⚠️ **Piège « branche courante »** : cette règle dépend de **où tu es MAINTENANT**. Le commit ne bouge pas —
+c'est TOI qui changes de point de vue avec `git checkout`. Ex. : après avoir committé sur `feature/x`, le commit
+y est (pas de merge). Mais si tu passes sur `main`, `main` ne l'a pas → **merge nécessaire**. Test mental :
+*« le commit est-il sur la branche où je suis À CET INSTANT ? »*
+
+---
+
+## `git push` ne pousse QUE la branche courante
+
+`git push` envoie **la branche où tu es** vers son homologue sur le remote. Il ne touche **AUCUNE autre branche**.
+
+- Sur `feature/xxx` → `git push` met à jour `origin/feature/xxx`. **`main` (local ET remote) ne bouge PAS.**
+- Pour mettre le travail dans `main` : aller **sur** `main` → `git merge feature/xxx` → **`git push`** (de `main`, cette fois).
+
+🧠 Chaque branche est **indépendante** : `commit` sauve sur la branche courante · `push` l'envoie sur son remote ·
+`merge` relie les branches entre elles. On met `main` à jour en allant **dessus**.
+
+⚡ Détail malin : après un merge, le `push` de `main` est souvent **minuscule** (« 1 object ») — les fichiers étaient
+déjà sur le remote (poussés via la feature branch). Git ne re-téléverse jamais ce qu'il a déjà ; seul le **commit de
+merge** (un petit pointeur) est nouveau.
