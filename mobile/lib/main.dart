@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'pages/articles_page.dart';
+import 'pages/emplacements_page.dart';
 
 void main() {
   runApp(const FluxoApp());
@@ -19,8 +19,9 @@ class FluxoApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
       ),
-      // Premier écran affiché au lancement : la liste des articles.
-      home: const ArticlesPage(),
+      // ⚠️ TEMPORAIRE : on affiche l'écran Emplacements pour le tester.
+      // Étape suivante (le menu) : l'accueil donnera accès aux DEUX écrans (Articles + Emplacements).
+      home: const EmplacementsPage(),
     );
   }
 }
