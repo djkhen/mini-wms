@@ -7,11 +7,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/main.dart';
 
 void main() {
-  testWidgets('L\'appli démarre et charge un écran de liste', (WidgetTester tester) async {
+  testWidgets('L\'appli démarre sur la coquille avec le menu', (WidgetTester tester) async {
     await tester.pumpWidget(const FluxoApp());
 
-    // Au démarrage, l'écran de liste affiche un indicateur de chargement
-    // (indépendant de QUEL écran est en accueil).
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    // Le menu latéral (NavigationRail) est présent.
+    expect(find.byType(NavigationRail), findsOneWidget);
+    // La section par défaut est l'accueil.
+    expect(find.text('Bienvenue dans Fluxo'), findsOneWidget);
   });
 }
