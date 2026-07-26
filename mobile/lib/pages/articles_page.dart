@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/article.dart';
 import '../services/api_service.dart';
+import 'article_detail_page.dart';
 
 /// Écran : la LISTE des articles (`GET /articles`).
 ///
@@ -93,6 +94,15 @@ class _ArticlesPageState extends State<ArticlesPage> {
       trailing: a.actif
           ? const Icon(Icons.check_circle, color: Colors.green)
           : const Icon(Icons.cancel, color: Colors.grey),
+      // 🧭 Clic → ouvre la FICHE DÉTAIL, empilée par-dessus la liste.
+      //   Navigator.push = "ajoute cet écran au sommet de la pile" (flèche retour auto).
+      //   MaterialPageRoute = la transition + le nouvel écran à afficher.
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ArticleDetailPage(article: a)),
+        );
+      },
     );
   }
 }
