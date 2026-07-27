@@ -65,6 +65,11 @@
       pivot sur `Article`. Modèle nailé : [conception §6quater](docs/conception-plateforme.md).
 - [ ] **Réception** (`reception` + `reception_line`) — 1er vrai flux : saisie en unité d'achat →
       **conversion** vers `stock_uom` → génère un `stock_move`. (Suite logique après `stock_move`.)
+  - 📋 **En-tête réaliste (œil métier user, 2026-07)** : **Fournisseur** · **N° de commande** (le bon de commande
+    que la réception SOLDE → contrôle « reçu vs commandé », relie au futur module **Achats**) · **Transporteur**
+    (qui a livré) · **N° BL** fournisseur · date · statut (attendue / en cours / terminée). ⚠️ v1 = champs **SIMPLES**
+    (texte / petit référentiel) ; « N° commande » → deviendra un **LIEN** vers l'entité `Commande` quand on fera le module Achats.
+  - 🏭 **Prérequis : entité `Fournisseur`** (référentiel simple, CRUD comme Article/Emplacement — bon exercice solo).
 - [ ] **Emplacement → modèle `location` du schéma** (à faire AVEC `stock_move`) — enrichir l'entité :
       ajouter le `type` **VIRTUEL** (INTERNE | FOURNISSEUR | CLIENT | PRODUCTION | PERTE, **indispensable**
       au stock dérivé : achat = `FOURNISSEUR→INTERNE`, vente = `INTERNE→CLIENT`, casse = `INTERNE→PERTE`)
