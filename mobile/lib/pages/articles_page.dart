@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/article.dart';
 import '../services/api_service.dart';
+import '../services/locator.dart';
 import 'article_detail_page.dart';
 
 /// Contenu de la section « Articles » : la LISTE (`GET /articles`).
@@ -14,7 +15,7 @@ class ArticlesPage extends StatefulWidget {
 }
 
 class _ArticlesPageState extends State<ArticlesPage> {
-  final ApiService _api = ApiService();
+  final ApiService _api = getIt<ApiService>(); // instance PARTAGÉE (annuaire), plus de `ApiService()`
   late Future<List<Article>> _futureArticles;
 
   @override

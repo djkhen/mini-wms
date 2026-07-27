@@ -39,6 +39,10 @@ dependencies:
   # Appelle l'API Quarkus ; plus tard : intercepteurs (token Keycloak), gestion d'erreurs.
   dio: ^5.7.0
 
+  # Service locator / injection de dépendances : "l'annuaire" d'objets partagés
+  # (on demande getIt<ApiService>() au lieu de recréer un ApiService dans chaque page).
+  get_it: ^8.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

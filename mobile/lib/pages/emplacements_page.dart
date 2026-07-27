@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/emplacement.dart';
 import '../services/api_service.dart';
+import '../services/locator.dart';
 
 /// Contenu de la section « Emplacements » : la LISTE (`GET /emplacements`).
 /// CONTENU PUR — Scaffold/AppBar fournis par la coquille `HomeShell`.
@@ -13,7 +14,7 @@ class EmplacementsPage extends StatefulWidget {
 }
 
 class _EmplacementsPageState extends State<EmplacementsPage> {
-  final ApiService _api = ApiService();
+  final ApiService _api = getIt<ApiService>(); // instance PARTAGÉE (annuaire), plus de `ApiService()`
   late Future<List<Emplacement>> _futureEmplacements;
 
   @override

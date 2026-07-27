@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'pages/home_shell.dart';
+import 'services/locator.dart';
 
 void main() {
+  setupLocator(); // enregistre les objets partagés (ApiService) AVANT de lancer l'appli
   runApp(const FluxoApp());
 }
 
