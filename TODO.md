@@ -87,6 +87,16 @@
       **natifs**. Cf. [ARCHI-DEPLOY §6](docs/ARCHI-DEPLOY.md).
 - [ ] **Multi-tenant** — `TenantResolver` unique (tenant depuis JWT, 401 si absent) + trancher le
       **mécanisme de migration par schéma** (app Quarkus vs CLI Liquibase). Point ouvert : [ARCHI-DEPLOY §3](docs/ARCHI-DEPLOY.md).
+- [ ] 💼 **LICENSING — table `public.tenant_features`** (⭐ le mécanisme « produit commercialisable ») : droits
+      **FLUX / GPAO** par tenant, `status` TRIAL/ACTIVE + `expires_at` (démo J+30 / licence à durée / permanent) →
+      **expiration auto, données conservées**. + page **superadmin** (le VENDEUR écrit les droits, le client JAMAIS)
+      + **gate UI** (GPAO non souscrite → section masquée = hook de vente). ⚠️ **Droit** (schéma `public`, vendeur)
+      **≠ paramétrage** (schéma client, admin). Détail : [conception §6quinquies](docs/conception-plateforme.md).
+- [ ] 💼 **Offres FLUX / FLUX+GPAO** — FLUX = socle vendable (marché large PME) ; GPAO = étage premium **optionnel**
+      activé par le droit. « GPAO seule » impossible. ⚠️ Discipline : le flux tourne **complet SANS aucun OF** (jamais
+      de champ obligatoire lié à un OF sur un `Mouvement` ; `Nomenclature`/`OrdreFabrication` vides pour un client flux-seul).
+- [ ] 🇫🇷 **Nommage code métier en FRANÇAIS** (déjà le cas : Article/Emplacement) — traduire les noms EN du schéma :
+      `stock_move`→Mouvement, `product`→Article, `package`→Colis, `uom`→Unite, `work_order`→OrdreFabrication, etc. Jamais FR/EN mélangés.
 
 ### 📄 Docs (décision à froid)
 - [ ] **Réaligner le README sur Fluxo** — il décrit encore un « mini-WMS générique » (pré-pivot plateforme).

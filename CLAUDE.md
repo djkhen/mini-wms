@@ -184,3 +184,8 @@ Question ouverte : caisses **standardisées** (BOM statique par modèle) ou **su
 - Multi-tenant mode SCHEMA, tenant depuis JWT, résolveur unique.
 - JVM en dev/petit, natif pour la densité, extensions officielles only.
 - Railway + Dockerfile ; CI GitHub Actions (tests natifs inclus).
+- **Deux offres empilées : FLUX (socle) / FLUX+GPAO (premium option)** ; « GPAO seule » impossible ; le flux tourne **complet SANS aucun OF**.
+- **Droit ≠ paramétrage** : droit (vendeur/superadmin, `public.tenant_features`, TRIAL/ACTIVE + `expires_at` → expiration auto, données conservées) = le **licensing** du produit ; paramétrage (admin client, son schéma) n'affiche que ce que le droit autorise.
+- **Stock ≠ étape du flux** : réservoir **dérivé** ; **allocation = mouvement `DRAFT`** (dispo = physique − réservé) ; contrôle réception = différenciateur bois.
+- **Nommage : code métier en FRANÇAIS** (Mouvement/Article/Emplacement/Reception/Colis/OrdreFabrication/Unite/Materiau/Nomenclature) — jamais FR/EN mélangés.
+- (Détail complet de ces 4 points : `docs/conception-plateforme.md` §6quinquies.)

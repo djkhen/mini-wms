@@ -158,6 +158,53 @@ convertible) → conversion → `stock_move` en `stock_uom`. `stock_move.uom_id`
 (le champ existe pour l'explicite/robustesse ; vaut `article.stock_uom` ~99 % des cas). Angle bois = le
 différenciateur : contrôle réception (poids théorique dims×densité vs pesé) tombe de la cascade de poids §6ter.
 
+## 6quinquies. 💼 MODÈLE PRODUIT — offres, licensing, séquence de flux, nommage (adopté 2026-07)
+
+Source : sessions Odoo de l'utilisateur (`CONTEXTE-mini_wms_2.md` + `CLAUDE.md`), **réconcilié** (Liquibase, pas Flyway).
+
+### A. Deux offres empilées, un seul socle — « flux d'abord, production en option »
+- **FLUX** = le **socle vendable** (négoce/distributeur, PME : réception→stockage→prépa→expédition ; **ne fabrique rien**).
+- **FLUX + GPAO** = **étage premium optionnel** (fabricant : reçoit matière → **produit** → expédie).
+- ❌ **« GPAO seule » n'existe PAS** : produire = consommer/créer du stock = des **mouvements** → la GPAO **présuppose le flux**.
+- ⚠️ **Discipline NON négociable** : le flux tourne **complet et cohérent SANS aucun OF**. Jamais de champ obligatoire
+  lié à un OF sur un `Mouvement`. `Nomenclature`/`OrdreFabrication` **existent mais restent vides** pour un client flux-seul (GPAO invisible).
+
+### B. ⭐ Licensing — DROIT (entitlement) ≠ PARAMÉTRAGE (le cœur « produit commercialisable »)
+Deux notions à **ne JAMAIS confondre** :
+- **DROIT** = ce que le client a *souscrit* (FLUX, GPAO…). **Commercial**, écrit par le **VENDEUR seul** (page superadmin),
+  source de vérité = schéma partagé **`public`**. Le client ne peut **JAMAIS** s'auto-attribuer un droit.
+- **PARAMÉTRAGE** = *comment* le client utilise ce à quoi il a droit (emplacements, workflows…). Édité par l'**admin du
+  client**, dans **son** schéma. N'affiche **que** ce que le droit autorise.
+> Le droit **gate** le paramétrage : GPAO non souscrite → section masquée (« non souscrit — contactez votre intégrateur » = **hook de vente**).
+
+**Table `public.tenant_features`** (1 ligne par droit, PAS un `TEXT[]`) :
+```
+tenant (FK public.tenants) · feature ('FLUX'|'GPAO'|futurs 'TRACA_LOT','EDI'…) · status ('ACTIVE'|'TRIAL')
+starts_at (nullable) · expires_at (nullable = permanent) · PK (tenant, feature)
+```
+Couvre 3 cas d'un seul modèle : **démo** (`TRIAL` + `expires_at` J+30) · **licence à durée** (`expires_at` = fin contrat) · **permanent** (`expires_at NULL`).
+- **Test de droit** (porte unique) : ligne existe, `status IN (ACTIVE,TRIAL)`, `now()` ∈ [`starts_at`, `expires_at`].
+- **Expiration = désactivation AUTO** (la date passée coupe seule, aucune tâche de nettoyage).
+- **Ne jamais couper les DONNÉES** : fin de démo GPAO → fonctions masquées, **données conservées** (si conversion plus tard, il les retrouve).
+- **« Expiré » ≠ « jamais eu »** → message « essai terminé, contactez-nous » vs « découvrez la GPAO ».
+- **Minimal** : pas de prix/remise/n° contrat ici (→ facturation, autre sujet). Répond juste à « **a-t-il le droit, MAINTENANT ?** ».
+
+### C. Séquence de flux — le STOCK n'est PAS une étape
+```
+Réception → Contrôle → Rangement → [STOCK] → Commande → Allocation → Préparation → Colisage/Caisse → Expédition → Suivi
+```
+- **`[STOCK]` = réservoir DÉRIVÉ** (état lu à tout moment), **jamais** une case qu'on traverse.
+- Chaque étape = **un mouvement** : Réception=`FOURNISSEUR→Quai` · Rangement=`Quai→Zone` · **Allocation = mouvement `DRAFT`**
+  `Zone→Prépa` (réserve sans sortir) · Préparation = ce `DRAFT` passe `DONE` · Colisage = vers un `Colis` · Expédition=`Zone→CLIENT`.
+- ⭐ **Allocation = étape critique invisible** : stock **disponible = physique − réservé (`DRAFT`)** → évite de promettre 2× la même palette.
+- **Contrôle réception** = le **différenciateur bois** (pesée vs poids théorique, humidité). Sans lui = WMS générique ; avec = on parle au métier.
+
+### D. Convention de nommage — code métier en FRANÇAIS
+Le code existant l'est déjà (`Article`, `Emplacement`). **Ne JAMAIS mélanger FR/EN.** Traduire les noms anglais du schéma :
+`stock_move`→**Mouvement** · `product`→**Article** · `location`→**Emplacement** · `uom`→**Unite** · `package`→**Colis** ·
+`bom`→**Nomenclature** (+`LigneNomenclature`) · `work_order`→**OrdreFabrication** · `reception`→**Reception** (+`LigneReception`) ·
+`material`→**Materiau** · `lot`→**Lot** · `tenant_features`→**TenantFeature**. Exception : termes d'infra en anglais (tenant, feature, schema, JWT).
+
 ## 7. Récit de migration (Uniface → moderne) — **argument portfolio**
 - **Legacy** : monolithe **Uniface** (GPAO **+** WMS même base), rustines (caisse virtuelle pour négoce),
   éditions Crystal Report, intégration Sage X3.
