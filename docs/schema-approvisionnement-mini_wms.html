@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cluster approvisionnement · mini_wms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#17121A;--surface:#221A28;--surface-2:#2B2033;--line:#3A2E44;
+    --aubergine:#8A5E80;--ink:#EFE7F0;--muted:#9A8DA2;
+    --gold:#F2B441;--teal:#54D6C2;--rose:#E97393;--blue:#7FA6E0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--canvas);color:var(--ink);font-family:"Inter",system-ui,sans-serif;
+    line-height:1.5;padding:22px 16px 60px;max-width:1120px;margin:0 auto;-webkit-font-smoothing:antialiased}
+  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--aubergine);margin-bottom:12px}
+  h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(24px,6.5vw,38px);
+    line-height:1.05;letter-spacing:-.02em;margin-bottom:14px}
+  .lead{color:var(--muted);font-size:14.5px;max-width:62ch;border-left:2px solid var(--aubergine);padding-left:14px}
+  .lead b{color:var(--ink);font-weight:600}
+  .erd{width:100%;overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:22px}
+  svg{display:block;min-width:1000px}
+  .flow{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--teal);text-align:center;
+    margin:22px 0 6px;letter-spacing:.02em}
+  .flow b{color:var(--gold)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--muted)}
+  .legend b{font-weight:700}
+  .notes{display:flex;flex-direction:column;gap:10px;margin-top:26px}
+  .note{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;gap:12px}
+  .note .k{font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--gold);flex:none;width:96px;padding-top:2px}
+  .note .b{font-size:13.5px;color:#D8CEDC;line-height:1.5}
+  .note .b b{color:var(--ink);font-weight:600}
+  .note code{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--gold);background:rgba(242,180,65,.08);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="eyebrow">Extension · approvisionnement & réception</div>
+<h1>Cluster tiers →<br>commande → réception.</h1>
+<p class="lead">Un seul <b>tiers</b> pour fournisseur, transporteur et (futur) client, distingués par des rôles. La <b>commande d'achat</b> planifie ; la <b>réception</b> l'exécute et <b>génère les mouvements</b>. Rien ne touche au stock directement.</p>
+
+<div class="flow">commande_achat → reception → <b>mouvement</b> (FOURNISSEUR → Quai)</div>
+
+<div class="erd">
+<svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8A5E80"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#F2B441"/></marker>
+  </defs>
+
+  <!-- relations -->
+  <g stroke="#8A5E80" stroke-width="1.3" fill="none" marker-end="url(#a)">
+    <path d="M150,300 L150,270"/>                        <!-- adresse -> tiers -->
+    <path d="M360,150 L300,150"/>                        <!-- commande_achat.fournisseur -> tiers -->
+    <path d="M470,270 L470,240"/>                        <!-- ligne_cmd -> commande -->
+    <path d="M690,190 L690,150 L620,150"/>               <!-- reception.fournisseur -> commande? no: to tiers -->
+    <path d="M690,300 L690,270"/>                        <!-- ligne_reception -> reception -->
+    <path d="M600,330 L520,330"/>                        <!-- ligne_reception -> ligne_cmd (reliquat) -->
+  </g>
+  <g stroke="#8A5E80" stroke-width="1.3" fill="none" stroke-dasharray="4 3" marker-end="url(#a)">
+    <path d="M690,215 L620,215"/>                         <!-- reception -> commande_achat (option) -->
+    <path d="M300,175 L340,175 L340,215 L360,215"/>      <!-- tiers <- reception.transporteur (route) -->
+  </g>
+  <!-- génère -->
+  <g stroke="#F2B441" stroke-width="1.6" fill="none" marker-end="url(#ag)">
+    <path d="M840,340 L900,340 L900,470 L840,470"/>
+  </g>
+  <text x="905" y="410" fill="#F2B441" font-size="10" font-weight="700" transform="rotate(90 905 410)">génère</text>
+
+  <!-- tiers -->
+  <g><rect x="40" y="90" width="260" height="170" rx="8" fill="#221A28" stroke="#54D6C2"/>
+    <rect x="40" y="90" width="260" height="26" rx="8" fill="#2B2033"/><rect x="40" y="108" width="260" height="8" fill="#2B2033"/>
+    <line x1="40" y1="116" x2="300" y2="116" stroke="#3A2E44"/>
+    <text x="54" y="108" fill="#54D6C2" font-size="12" font-weight="700">tiers</text>
+    <text x="290" y="108" fill="#9A8DA2" font-size="9" text-anchor="end">le partenaire unique</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="54" y="133"><tspan fill="#F2B441">PK</tspan> id · code</text>
+      <text x="54" y="147">raison_sociale · siret</text>
+      <text x="54" y="161">email · telephone</text>
+      <text x="54" y="181" fill="#54D6C2">est_fournisseur (bool)</text>
+      <text x="54" y="195" fill="#54D6C2">est_transporteur (bool)</text>
+      <text x="54" y="209" fill="#54D6C2">est_client (bool)</text>
+      <text x="54" y="229" fill="#9A8DA2">1 tiers = plusieurs rôles</text>
+      <text x="54" y="243" fill="#9A8DA2">(fournisseur ET transporteur…)</text>
+    </g></g>
+
+  <!-- adresse -->
+  <g><rect x="40" y="300" width="260" height="104" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="40" y="300" width="260" height="26" rx="8" fill="#2B2033"/><rect x="40" y="318" width="260" height="8" fill="#2B2033"/>
+    <line x1="40" y1="326" x2="300" y2="326" stroke="#3A2E44"/>
+    <text x="54" y="318" fill="#EFE7F0" font-size="12" font-weight="700">adresse</text>
+    <text x="290" y="318" fill="#9A8DA2" font-size="9" text-anchor="end">optionnel</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="54" y="343"><tspan fill="#F2B441">PK</tspan> id · <tspan fill="#8A5E80">FK</tspan> tiers_id</text>
+      <text x="54" y="357">type: SIEGE|LIVRAISON|FACTURATION</text>
+      <text x="54" y="371">ligne1 · cp · ville · pays</text>
+      <text x="54" y="391" fill="#9A8DA2">plusieurs adresses par tiers</text>
+    </g></g>
+
+  <!-- commande_achat -->
+  <g><rect x="360" y="90" width="260" height="126" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="360" y="90" width="260" height="26" rx="8" fill="#2B2033"/><rect x="360" y="108" width="260" height="8" fill="#2B2033"/>
+    <line x1="360" y1="116" x2="620" y2="116" stroke="#3A2E44"/>
+    <text x="374" y="108" fill="#EFE7F0" font-size="12" font-weight="700">commande_achat</text>
+    <text x="610" y="108" fill="#9A8DA2" font-size="9" text-anchor="end">planifie</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="374" y="133"><tspan fill="#F2B441">PK</tspan> id · reference</text>
+      <text x="374" y="147"><tspan fill="#8A5E80">FK</tspan> fournisseur_id → tiers</text>
+      <text x="374" y="161">date_commande · date_prevue</text>
+      <text x="374" y="175" fill="#54D6C2">etat: BROUILLON|CONFIRMEE|</text>
+      <text x="374" y="189" fill="#54D6C2">   RECUE_PARTIEL|RECUE|ANNULEE</text>
+      <text x="374" y="203">devise · montant_total (dérivé)</text>
+    </g></g>
+
+  <!-- ligne_commande_achat -->
+  <g><rect x="360" y="270" width="260" height="110" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="360" y="270" width="260" height="26" rx="8" fill="#2B2033"/><rect x="360" y="288" width="260" height="8" fill="#2B2033"/>
+    <line x1="360" y1="296" x2="620" y2="296" stroke="#3A2E44"/>
+    <text x="374" y="288" fill="#EFE7F0" font-size="12" font-weight="700">ligne_commande_achat</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="374" y="313"><tspan fill="#F2B441">PK</tspan> id · <tspan fill="#8A5E80">FK</tspan> commande_id</text>
+      <text x="374" y="327"><tspan fill="#8A5E80">FK</tspan> article_id · <tspan fill="#8A5E80">FK</tspan> unite_id</text>
+      <text x="374" y="341">quantite_commandee</text>
+      <text x="374" y="355">prix_unitaire</text>
+      <text x="374" y="369" fill="#9A8DA2">reste = commandé − reçu (dérivé)</text>
+    </g></g>
+
+  <!-- reception -->
+  <g><rect x="660" y="90" width="270" height="150" rx="8" fill="#221A28" stroke="#F2B441"/>
+    <rect x="660" y="90" width="270" height="26" rx="8" fill="#2B2033"/><rect x="660" y="108" width="270" height="8" fill="#2B2033"/>
+    <line x1="660" y1="116" x2="930" y2="116" stroke="#3A2E44"/>
+    <text x="674" y="108" fill="#F2B441" font-size="12" font-weight="700">reception</text>
+    <text x="920" y="108" fill="#9A8DA2" font-size="9" text-anchor="end">exécute</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="674" y="133"><tspan fill="#F2B441">PK</tspan> id · reference</text>
+      <text x="674" y="147"><tspan fill="#8A5E80">FK</tspan> fournisseur_id → tiers</text>
+      <text x="674" y="161"><tspan fill="#8A5E80">FK</tspan> transporteur_id → tiers</text>
+      <text x="674" y="175"><tspan fill="#8A5E80">FK</tspan> commande_achat_id (nullable)</text>
+      <text x="674" y="189">num_bl · date · etat</text>
+      <text x="674" y="203" fill="#54D6C2">poids_pese_kg (bon de pesée)</text>
+      <text x="674" y="223" fill="#9A8DA2">réception sans commande = possible</text>
+    </g></g>
+
+  <!-- ligne_reception -->
+  <g><rect x="660" y="300" width="270" height="120" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="660" y="300" width="270" height="26" rx="8" fill="#2B2033"/><rect x="660" y="318" width="270" height="8" fill="#2B2033"/>
+    <line x1="660" y1="326" x2="930" y2="326" stroke="#3A2E44"/>
+    <text x="674" y="318" fill="#EFE7F0" font-size="12" font-weight="700">ligne_reception</text>
+    <text x="920" y="318" fill="#9A8DA2" font-size="9" text-anchor="end">génère mvt</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="674" y="343"><tspan fill="#F2B441">PK</tspan> id · <tspan fill="#8A5E80">FK</tspan> reception_id</text>
+      <text x="674" y="357"><tspan fill="#8A5E80">FK</tspan> ligne_commande_id (nullable)</text>
+      <text x="674" y="371"><tspan fill="#8A5E80">FK</tspan> article_id · <tspan fill="#8A5E80">FK</tspan> lot_id</text>
+      <text x="674" y="385">quantite_recue · <tspan fill="#8A5E80">FK</tspan> unite_id</text>
+      <text x="674" y="399" fill="#54D6C2">poids_pese_ligne_kg (option)</text>
+    </g></g>
+
+  <!-- mouvement (externe) -->
+  <g opacity=".72"><rect x="660" y="450" width="180" height="86" rx="8" fill="#1B1520" stroke="#3A2E44" stroke-dasharray="4 3"/>
+    <text x="674" y="472" fill="#F2B441" font-size="11" font-weight="700">mouvement</text>
+    <text x="820" y="472" fill="#9A8DA2" font-size="8.5" text-anchor="end">(existant)</text>
+    <g fill="#9A8DA2" font-size="10">
+      <text x="674" y="492">FOURNISSEUR → Quai</text>
+      <text x="674" y="507">à la validation</text>
+      <text x="674" y="522">de la réception</text>
+    </g></g>
+
+  <!-- article/unite externes (ancrage visuel) -->
+  <g opacity=".5" fill="#9A8DA2" font-size="10">
+    <text x="374" y="410">→ article, unite, lot : référentiels existants</text>
+  </g>
+</svg>
+</div>
+
+<div class="legend">
+  <span><b style="color:#F2B441">PK</b> clé</span>
+  <span><b style="color:#8A5E80">FK</b> réf.</span>
+  <span><b style="color:#8A5E80">┄┄</b> lien optionnel (nullable)</span>
+  <span><b style="color:#54D6C2">tiers</b> · <b style="color:#F2B441">reception</b></span>
+  <span><b style="color:#F2B441">— génère →</b> mouvement</span>
+</div>
+
+<div class="notes">
+  <div class="note"><span class="k">TIERS</span><span class="b"><b>Une table, des rôles.</b> Fournisseur, transporteur, client = des booléens (<code>est_fournisseur</code>…) sur un même <code>tiers</code>. Un transporteur qui est aussi fournisseur = une seule fiche. Se réutilise tel quel côté vente.</span></div>
+  <div class="note"><span class="k">COMMANDE</span><span class="b"><b>Planifie, ne bouge rien.</b> La commande d'achat n'impacte pas le stock — elle décrit ce qui est attendu. C'est la <b>réception</b> qui exécute et génère les mouvements.</span></div>
+  <div class="note"><span class="k">RELIQUAT</span><span class="b"><b>Commandé vs reçu = dérivé.</b> <code>ligne_reception.ligne_commande_id</code> relie le reçu au commandé. Le reste à livrer = quantité commandée − Σ reçu. L'état de la commande (<code>RECUE_PARTIEL</code>/<code>RECUE</code>) en découle, jamais saisi à la main.</span></div>
+  <div class="note"><span class="k">SANS CMD</span><span class="b"><b>Réception spontanée permise.</b> <code>commande_achat_id</code> et <code>ligne_commande_id</code> sont <b>nullables</b> : un retour, un dépannage, une livraison hors commande restent possibles. Le flux ne suppose jamais qu'une commande existe.</span></div>
+  <div class="note"><span class="k">PESÉE</span><span class="b"><b>Le transporteur nourrit ton contrôle.</b> <code>transporteur_id</code> + <code>poids_pese_kg</code> = le bon de pesée. Comparé au poids théorique (dimensions × densité du <code>materiau</code>) → alerte écart. C'est ton différenciateur bois, désormais tracé jusqu'au transporteur.</span></div>
+  <div class="note"><span class="k">FACTURE ?</span><span class="b"><b>Volontairement absente.</b> Prix d'achat sur la ligne de commande = oui (utile au reliquat/valorisation). Mais la facturation fournisseur (TVA, comptabilité) est un autre domaine — à ne pas mélanger ici.</span></div>
+</div>
+
+</body>
+</html>

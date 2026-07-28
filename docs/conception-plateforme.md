@@ -206,6 +206,37 @@ Le code existant l'est déjà (`Article`, `Emplacement`). **Ne JAMAIS mélanger 
 `bom`→**Nomenclature** (+`LigneNomenclature`) · `work_order`→**OrdreFabrication** · `reception`→**Reception** (+`LigneReception`) ·
 `material`→**Materiau** · `lot`→**Lot** · `tenant_features`→**TenantFeature**. Exception : termes d'infra en anglais (tenant, feature, schema, JWT).
 
+## 6sexies. 🚚 Cluster APPROVISIONNEMENT — tiers → commande → réception (schéma dédié 2026-07)
+
+Source : [`schema-approvisionnement-mini_wms.html`](schema-approvisionnement-mini_wms.html). Répond à l'œil métier de
+l'utilisateur (fournisseur, commande, transporteur, pesée). Flux : `commande_achat → reception → mouvement (FOURNISSEUR→Quai)`.
+
+### `tiers` — UNE table, des RÔLES (l'idée clé) ⭐
+Fournisseur, transporteur, (futur) client = des **booléens** sur un même `tiers` : `est_fournisseur`, `est_transporteur`,
+`est_client`. Un transporteur qui est **aussi** fournisseur = **une seule fiche**. **Réutilisable tel quel côté vente.**
+Champs : `code`, `raison_sociale`, `siret`, `email`, `telephone`. + table **`adresse`** liée (SIEGE/LIVRAISON/FACTURATION, plusieurs par tiers).
+> 👉 Ça **remplace** l'idée « entité Fournisseur » : un seul `Tiers` polyvalent au lieu de N entités séparées.
+
+### `commande_achat` (+ `ligne_commande_achat`) — PLANIFIE, ne bouge rien
+La commande décrit **ce qui est attendu** ; elle **n'impacte pas le stock**. Champs : `reference`, FK `fournisseur_id→tiers`,
+`date_commande`/`date_prevue`, `etat` (BROUILLON|CONFIRMEE|RECUE_PARTIEL|RECUE|ANNULEE), `montant_total` (dérivé).
+Ligne : article, unite, `quantite_commandee`, `prix_unitaire`.
+
+### `reception` (+ `ligne_reception`) — EXÉCUTE + génère les mouvements
+FK `fournisseur_id→tiers`, FK **`transporteur_id→tiers`**, FK **`commande_achat_id` (NULLABLE)**, `num_bl`, date, etat,
+**`poids_pese_kg`**. Ligne : FK `ligne_commande_id` (nullable = **reliquat**), article, lot, `quantite_recue`, unite.
+→ À la **validation**, chaque ligne génère un **`Mouvement`** `FOURNISSEUR→Quai` (le stock apparaît, dérivé).
+
+### Les 4 règles d'or (notes du schéma)
+- **Reliquat DÉRIVÉ** : `ligne_reception.ligne_commande_id` relie reçu↔commandé ; l'état de la commande (RECUE_PARTIEL/RECUE)
+  **en découle**, jamais saisi à la main. Reste à livrer = quantité commandée − Σ reçu.
+- **Réception SANS commande possible** (`commande_achat_id`/`ligne_commande_id` **nullables**) : retour, dépannage, hors
+  commande. Le flux ne suppose **JAMAIS** qu'une commande existe. ✅ cohérent « flux d'abord ».
+- **Pesée = différenciateur bois** : `transporteur_id` + `poids_pese_kg` (bon de pesée) → comparé au poids théorique
+  (dim × densité `materiau`) → **alerte écart**. Tracé jusqu'au transporteur.
+- **Facturation VOLONTAIREMENT absente** : `prix_unitaire` sur la ligne de commande = oui (reliquat/valorisation) ; mais
+  TVA/comptabilité fournisseur = **autre domaine**, à ne pas mélanger ici.
+
 ## 7. Récit de migration (Uniface → moderne) — **argument portfolio**
 - **Legacy** : monolithe **Uniface** (GPAO **+** WMS même base), rustines (caisse virtuelle pour négoce),
   éditions Crystal Report, intégration Sage X3.

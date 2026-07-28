@@ -63,13 +63,15 @@
       Stock-compteur ; le stock devient une **vue d'agrégation**. Design figé : [conception §6ter](docs/conception-plateforme.md).
 - [ ] **Référentiel UoM** — tables `uom` + `uom_category` (+ `packaging` lié à l'article) et le `stock_uom`
       pivot sur `Article`. Modèle nailé : [conception §6quater](docs/conception-plateforme.md).
-- [ ] **Réception** (`reception` + `reception_line`) — 1er vrai flux : saisie en unité d'achat →
-      **conversion** vers `stock_uom` → génère un `stock_move`. (Suite logique après `stock_move`.)
-  - 📋 **En-tête réaliste (œil métier user, 2026-07)** : **Fournisseur** · **N° de commande** (le bon de commande
-    que la réception SOLDE → contrôle « reçu vs commandé », relie au futur module **Achats**) · **Transporteur**
-    (qui a livré) · **N° BL** fournisseur · date · statut (attendue / en cours / terminée). ⚠️ v1 = champs **SIMPLES**
-    (texte / petit référentiel) ; « N° commande » → deviendra un **LIEN** vers l'entité `Commande` quand on fera le module Achats.
-  - 🏭 **Prérequis : entité `Fournisseur`** (référentiel simple, CRUD comme Article/Emplacement — bon exercice solo).
+- [ ] **Cluster APPROVISIONNEMENT** (`Tiers` → `CommandeAchat` → `Reception`) — le 1er vrai flux entrant.
+      ⭐ Schéma dédié : [`schema-approvisionnement-mini_wms.html`](docs/schema-approvisionnement-mini_wms.html) · détail [conception §6sexies](docs/conception-plateforme.md).
+  - 🧑‍🤝‍🧑 **`Tiers`** — UNE table, des RÔLES (`est_fournisseur`/`est_transporteur`/`est_client`) → un transporteur aussi
+    fournisseur = 1 seule fiche, réutilisable côté vente. Référentiel simple = **bon exercice solo** ; **remplace « entité Fournisseur »**. (+ `Adresse` liée, optionnelle.)
+  - 📋 **`CommandeAchat` + `LigneCommandeAchat`** — PLANIFIE (ne bouge rien) : article, unité, quantité commandée, prix_unitaire. Reliquat = commandé − reçu (**DÉRIVÉ**).
+  - 📥 **`Reception` + `LigneReception`** — EXÉCUTE : FK fournisseur + **transporteur** (tiers) + `commande_achat_id` **NULLABLE**
+    (réception sans commande OK), `num_bl`, `poids_pese_kg`. À la validation → génère un **`Mouvement`** (`FOURNISSEUR→Quai`). Ligne : `ligne_commande_id` nullable = **reliquat**.
+  - ⚖️ **Pesée = différenciateur bois** : `poids_pese_kg` (via transporteur) vs poids théorique (dim × densité `Materiau`) → alerte écart.
+  - 🚫 **Facturation ABSENTE** ici (prix d'achat sur la ligne = OK pour reliquat/valorisation ; TVA/compta = autre domaine).
 - [ ] **Emplacement → modèle `location` du schéma** (à faire AVEC `stock_move`) — enrichir l'entité :
       ajouter le `type` **VIRTUEL** (INTERNE | FOURNISSEUR | CLIENT | PRODUCTION | PERTE, **indispensable**
       au stock dérivé : achat = `FOURNISSEUR→INTERNE`, vente = `INTERNE→CLIENT`, casse = `INTERNE→PERTE`)
