@@ -76,7 +76,7 @@
       **+ `parent_id`** (arborescence Entrepôt→Zone→case). ⚠️ **Garder les DEUX axes sans les confondre** :
       le `type` actuel = **rôle fonctionnel** (RECEPTION/STOCKAGE/…) ; le nouveau = **réel vs virtuel**.
       ⏸️ **Pas avant `stock_move`** (les emplacements virtuels ne servent à rien sans mouvements = travail
-      dans le vide). Comparaison détaillée : entité actuelle vs table `location` de [`schema-bd-wms-gpao.html`](docs/schema-bd-wms-gpao.html).
+      dans le vide). Comparaison détaillée : entité actuelle vs table `emplacement` de [`schema-bd-mini_wms-v2.html`](docs/schema-bd-mini_wms-v2.html).
 
 ### 🧹 Nettoyages / dette (petits, à caser)
 - [ ] **Scaffold `mobile/`** à committer proprement (`chore: scaffold mobile`) ; retirer les stubs vides

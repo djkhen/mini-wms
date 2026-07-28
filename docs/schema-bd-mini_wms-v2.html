@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schéma BD · mini_wms (v2, FR)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#17121A;--surface:#221A28;--surface-2:#2B2033;--line:#3A2E44;
+    --aubergine:#8A5E80;--ink:#EFE7F0;--muted:#9A8DA2;
+    --gold:#F2B441;--teal:#54D6C2;--rose:#E97393;--blue:#7FA6E0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--canvas);color:var(--ink);font-family:"Inter",system-ui,sans-serif;
+    line-height:1.5;padding:22px 16px 60px;max-width:1120px;margin:0 auto;-webkit-font-smoothing:antialiased}
+  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--aubergine);margin-bottom:12px}
+  h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(26px,7vw,40px);
+    line-height:1.04;letter-spacing:-.02em;margin-bottom:14px}
+  .lead{color:var(--muted);font-size:14.5px;max-width:62ch;border-left:2px solid var(--aubergine);padding-left:14px}
+  .lead b{color:var(--ink);font-weight:600}
+  .erd{width:100%;overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:22px}
+  svg{display:block;min-width:1040px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--muted)}
+  .legend b{font-weight:700}
+  footer{margin-top:26px;font-size:11.5px;color:var(--muted);line-height:1.6}
+  footer code{font-family:"JetBrains Mono",monospace;color:var(--gold);background:rgba(242,180,65,.08);padding:1px 5px;border-radius:4px}
+  footer b{color:#C9BFCF}
+</style>
+</head>
+<body>
+
+<div class="eyebrow">Modèle de données · v2 · nommage français</div>
+<h1>Schéma BD<br>mini_wms.</h1>
+<p class="lead">Deux niveaux d'isolation : le schéma <b>public</b> (partagé) porte les tenants et leurs droits ; chaque <b>schéma client</b> porte les données métier, isolées. Invariant central inchangé : <b>le stock est dérivé des mouvements</b>, et la production comme la réception ne font que <b>générer des mouvements</b>.</p>
+
+<div class="erd">
+<svg viewBox="0 0 1040 960" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8A5E80"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#F2B441"/></marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7FA6E0"/></marker>
+  </defs>
+
+  <!-- ===== bandeau public ===== -->
+  <rect x="20" y="44" width="1000" height="132" rx="10" fill="none" stroke="#7FA6E0" stroke-dasharray="5 4" opacity=".55"/>
+  <text x="34" y="64" fill="#7FA6E0" font-size="11" font-weight="700" letter-spacing=".1em">SCHÉMA public — partagé (le vendeur écrit les droits)</text>
+
+  <!-- relations -->
+  <g stroke="#7FA6E0" stroke-width="1.3" fill="none" marker-end="url(#ab)">
+    <path d="M320,120 L290,120"/>            <!-- tenant_feature -> tenant -->
+  </g>
+  <g stroke="#8A5E80" stroke-width="1.2" fill="none" marker-end="url(#a)">
+    <path d="M370,352 L370,330"/>            <!-- article -> materiau (via) approx -->
+    <path d="M255,300 L280,300"/>            <!-- materiau anchor (decor) -->
+  </g>
+
+  <!-- key relations client -->
+  <g stroke="#8A5E80" stroke-width="1.2" fill="none" marker-end="url(#a)">
+    <path d="M885,352 L885,300 L620,300 L620,352"/>    <!-- lot -> article (top) -->
+    <path d="M470,470 L400,470"/>                        <!-- article <- materiau? -->
+    <path d="M560,560 L505,560"/>                        <!-- mouvement -> article -->
+    <path d="M700,470 L700,352"/>                        <!-- mouvement -> emplacement (dashed below) -->
+    <path d="M300,640 L300,614"/>                        <!-- ligne_nomenclature -> nomenclature -->
+    <path d="M300,556 L300,530"/>                        <!-- nomenclature -> article -->
+    <path d="M960,808 L960,660"/>                        <!-- ligne_reception -> reception -->
+  </g>
+  <g stroke="#8A5E80" stroke-width="1.2" fill="none" stroke-dasharray="4 3" marker-end="url(#a)">
+    <path d="M700,614 L700,700 L560,700"/>              <!-- mouvement -> emplacement bottom route to loc? -->
+  </g>
+  <!-- génère (or) -->
+  <g stroke="#F2B441" stroke-width="1.5" fill="none" marker-end="url(#ag)">
+    <path d="M300,808 L470,808 L470,614"/>              <!-- ordre_fab génère mouvement -->
+    <path d="M840,760 L890,760 L890,614"/>              <!-- ligne_reception génère mouvement? route -->
+  </g>
+  <g fill="#F2B441" font-size="9.5" font-weight="700"><text x="360" y="720">génère</text></g>
+
+  <!-- ===== boîtes public ===== -->
+  <!-- tenant -->
+  <g><rect x="60" y="80" width="230" height="82" rx="8" fill="#221A28" stroke="#7FA6E0"/>
+    <rect x="60" y="80" width="230" height="26" rx="8" fill="#2B2033"/><rect x="60" y="98" width="230" height="8" fill="#2B2033"/>
+    <line x1="60" y1="106" x2="290" y2="106" stroke="#3A2E44"/>
+    <text x="74" y="98" fill="#7FA6E0" font-size="12" font-weight="700">tenant</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="74" y="123"><tspan fill="#F2B441">PK</tspan> code (immuable)</text>
+      <text x="74" y="137">libelle · cree_le</text>
+      <text x="74" y="151" fill="#9A8DA2">= 1 client = 1 schéma</text>
+    </g></g>
+  <!-- tenant_feature -->
+  <g><rect x="320" y="80" width="270" height="82" rx="8" fill="#221A28" stroke="#7FA6E0"/>
+    <rect x="320" y="80" width="270" height="26" rx="8" fill="#2B2033"/><rect x="320" y="98" width="270" height="8" fill="#2B2033"/>
+    <line x1="320" y1="106" x2="590" y2="106" stroke="#3A2E44"/>
+    <text x="334" y="98" fill="#7FA6E0" font-size="12" font-weight="700">tenant_feature</text>
+    <text x="580" y="98" fill="#9A8DA2" font-size="9" text-anchor="end">droits / licensing</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="334" y="123"><tspan fill="#F2B441">PK</tspan>(<tspan fill="#8A5E80">FK</tspan> tenant, feature)</text>
+      <text x="334" y="137">feature: FLUX | GPAO | …</text>
+      <text x="334" y="151" fill="#54D6C2">statut(ACTIVE/TRIAL) · debut · <tspan fill="#E97393">expire_le</tspan></text>
+    </g></g>
+  <text x="620" y="128" fill="#9A8DA2" font-size="9.5">« GPAO seul » impossible :</text>
+  <text x="620" y="141" fill="#9A8DA2" font-size="9.5">GPAO présuppose FLUX.</text>
+  <text x="620" y="154" fill="#9A8DA2" font-size="9.5">expire_le NULL = permanent.</text>
+
+  <!-- séparateur -->
+  <line x1="20" y1="200" x2="1020" y2="200" stroke="#3A2E44"/>
+  <text x="34" y="222" fill="#8A5E80" font-size="11" font-weight="700" letter-spacing=".1em">SCHÉMA &lt;client&gt; — par tenant (isolation SCHEMA · résolu depuis le JWT)</text>
+
+  <!-- ===== référentiels ===== -->
+  <!-- materiau -->
+  <g><rect x="40" y="250" width="215" height="104" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="40" y="250" width="215" height="26" rx="8" fill="#2B2033"/><rect x="40" y="268" width="215" height="8" fill="#2B2033"/>
+    <line x1="40" y1="276" x2="255" y2="276" stroke="#3A2E44"/>
+    <text x="54" y="268" fill="#EFE7F0" font-size="12" font-weight="700">materiau</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="54" y="293"><tspan fill="#F2B441">PK</tspan> id · code</text>
+      <text x="54" y="307">libelle</text>
+      <text x="54" y="321" fill="#54D6C2">densite_kg_m3</text>
+      <text x="54" y="335">humidite_ref_pct</text>
+    </g></g>
+  <!-- unite -->
+  <g><rect x="275" y="250" width="185" height="104" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="275" y="250" width="185" height="26" rx="8" fill="#2B2033"/><rect x="275" y="268" width="185" height="8" fill="#2B2033"/>
+    <line x1="275" y1="276" x2="460" y2="276" stroke="#3A2E44"/>
+    <text x="289" y="268" fill="#EFE7F0" font-size="12" font-weight="700">unite</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="289" y="293"><tspan fill="#F2B441">PK</tspan> id · code</text>
+      <text x="289" y="307">PCE·M3·M2·ML·KG</text>
+      <text x="289" y="321">categorie</text>
+      <text x="289" y="335">ratio_base</text>
+    </g></g>
+  <!-- emplacement -->
+  <g><rect x="560" y="250" width="240" height="104" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="560" y="250" width="240" height="26" rx="8" fill="#2B2033"/><rect x="560" y="268" width="240" height="8" fill="#2B2033"/>
+    <line x1="560" y1="276" x2="800" y2="276" stroke="#3A2E44"/>
+    <text x="574" y="268" fill="#EFE7F0" font-size="12" font-weight="700">emplacement</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="574" y="293"><tspan fill="#F2B441">PK</tspan> id · code</text>
+      <text x="574" y="307" fill="#54D6C2">type: INTERNE | FOURNISSEUR</text>
+      <text x="574" y="321" fill="#54D6C2">CLIENT | PRODUCTION | PERTE</text>
+      <text x="574" y="335">parent_id ↺</text>
+    </g></g>
+  <!-- lot -->
+  <g><rect x="820" y="250" width="200" height="104" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="820" y="250" width="200" height="26" rx="8" fill="#2B2033"/><rect x="820" y="268" width="200" height="8" fill="#2B2033"/>
+    <line x1="820" y1="276" x2="1020" y2="276" stroke="#3A2E44"/>
+    <text x="834" y="268" fill="#EFE7F0" font-size="12" font-weight="700">lot</text>
+    <text x="1010" y="268" fill="#9A8DA2" font-size="9" text-anchor="end">traçabilité</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="834" y="293"><tspan fill="#F2B441">PK</tspan> id · numero</text>
+      <text x="834" y="307"><tspan fill="#8A5E80">FK</tspan> article_id</text>
+      <text x="834" y="321" fill="#54D6C2">humidite_reelle_pct</text>
+      <text x="834" y="335" fill="#54D6C2">poids_reel_kg</text>
+    </g></g>
+
+  <!-- ===== coeur ===== -->
+  <!-- article -->
+  <g><rect x="270" y="400" width="235" height="212" rx="8" fill="#221A28" stroke="#54D6C2"/>
+    <rect x="270" y="400" width="235" height="26" rx="8" fill="#2B2033"/><rect x="270" y="418" width="235" height="8" fill="#2B2033"/>
+    <line x1="270" y1="426" x2="505" y2="426" stroke="#3A2E44"/>
+    <text x="284" y="418" fill="#54D6C2" font-size="12" font-weight="700">article</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="284" y="443"><tspan fill="#F2B441">PK</tspan> id · code · libelle</text>
+      <text x="284" y="457" fill="#54D6C2">famille: SIMPLE | BOIS |</text>
+      <text x="284" y="471" fill="#54D6C2">        PANNEAU | CAISSE</text>
+      <text x="284" y="485">epaisseur · largeur · longueur</text>
+      <text x="284" y="499"><tspan fill="#8A5E80">FK</tspan> materiau_id</text>
+      <text x="284" y="513"><tspan fill="#8A5E80">FK</tspan> unite_stock_id</text>
+      <text x="284" y="527">tracabilite: AUCUNE|LOT|SERIE</text>
+      <text x="284" y="541" fill="#E97393">est_contenant (bool)</text>
+      <text x="284" y="555" fill="#E97393">charge_max_kg · tare_kg</text>
+      <text x="284" y="569" fill="#E97393">dim_interne_l/l/h</text>
+      <text x="284" y="589" fill="#9A8DA2">volume/surface = dérivés</text>
+    </g></g>
+  <!-- mouvement -->
+  <g><rect x="555" y="400" width="265" height="212" rx="8" fill="#221A28" stroke="#F2B441"/>
+    <rect x="555" y="400" width="265" height="26" rx="8" fill="#2B2033"/><rect x="555" y="418" width="265" height="8" fill="#2B2033"/>
+    <line x1="555" y1="426" x2="820" y2="426" stroke="#3A2E44"/>
+    <text x="569" y="418" fill="#F2B441" font-size="12" font-weight="700">mouvement</text>
+    <text x="810" y="418" fill="#9A8DA2" font-size="9" text-anchor="end">le cœur</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="569" y="443"><tspan fill="#F2B441">PK</tspan> id</text>
+      <text x="569" y="457"><tspan fill="#8A5E80">FK</tspan> article_id · <tspan fill="#8A5E80">FK</tspan> lot_id</text>
+      <text x="569" y="471" fill="#54D6C2">quantite (&gt; 0 toujours)</text>
+      <text x="569" y="485"><tspan fill="#8A5E80">FK</tspan> unite_id</text>
+      <text x="569" y="499"><tspan fill="#8A5E80">FK</tspan> source_id → emplacement</text>
+      <text x="569" y="513"><tspan fill="#8A5E80">FK</tspan> destination_id → emplacement</text>
+      <text x="569" y="527" fill="#E97393"><tspan fill="#8A5E80">FK</tspan> colis_source_id / colis_dest_id</text>
+      <text x="569" y="541">date_effective · cree_le</text>
+      <text x="569" y="555" fill="#54D6C2">etat: BROUILLON|VALIDE|ANNULE</text>
+      <text x="569" y="569">origine_type · origine_id</text>
+      <text x="569" y="589" fill="#9A8DA2">immuable si VALIDE</text>
+    </g></g>
+  <!-- colis -->
+  <g><rect x="850" y="400" width="170" height="150" rx="8" fill="#221A28" stroke="#E97393"/>
+    <rect x="850" y="400" width="170" height="26" rx="8" fill="#2B2033"/><rect x="850" y="418" width="170" height="8" fill="#2B2033"/>
+    <line x1="850" y1="426" x2="1020" y2="426" stroke="#3A2E44"/>
+    <text x="864" y="418" fill="#E97393" font-size="12" font-weight="700">colis</text>
+    <text x="1010" y="418" fill="#9A8DA2" font-size="9" text-anchor="end">la caisse</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="864" y="443"><tspan fill="#F2B441">PK</tspan> id</text>
+      <text x="864" y="457"><tspan fill="#8A5E80">FK</tspan> article_id</text>
+      <text x="864" y="471"><tspan fill="#8A5E80">FK</tspan> lot_id (n° série)</text>
+      <text x="864" y="485"><tspan fill="#8A5E80">FK</tspan> colis_parent_id ↺</text>
+      <text x="864" y="499">scelle_le</text>
+      <text x="864" y="519" fill="#9A8DA2">contenu = dérivé</text>
+      <text x="864" y="533" fill="#9A8DA2">des mouvements</text>
+    </g></g>
+  <text x="850" y="575" fill="#9A8DA2" font-size="9.5">article réceptionné →</text>
+  <text x="850" y="588" fill="#9A8DA2" font-size="9.5">colis fabriqué = 1 mouvement</text>
+  <text x="850" y="601" fill="#9A8DA2" font-size="9.5">(colis_dest_id renseigné)</text>
+
+  <!-- ===== production ===== -->
+  <!-- nomenclature -->
+  <g><rect x="180" y="640" width="240" height="88" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="180" y="640" width="240" height="26" rx="8" fill="#2B2033"/><rect x="180" y="658" width="240" height="8" fill="#2B2033"/>
+    <line x1="180" y1="666" x2="420" y2="666" stroke="#3A2E44"/>
+    <text x="194" y="658" fill="#EFE7F0" font-size="12" font-weight="700">nomenclature</text>
+    <text x="410" y="658" fill="#9A8DA2" font-size="9" text-anchor="end">GPAO (option)</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="194" y="683"><tspan fill="#F2B441">PK</tspan> id · version · active</text>
+      <text x="194" y="697"><tspan fill="#8A5E80">FK</tspan> article_id (produit fini)</text>
+      <text x="194" y="711">quantite</text>
+    </g></g>
+  <!-- ligne_nomenclature -->
+  <g><rect x="180" y="748" width="240" height="88" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="180" y="748" width="240" height="26" rx="8" fill="#2B2033"/><rect x="180" y="766" width="240" height="8" fill="#2B2033"/>
+    <line x1="180" y1="774" x2="420" y2="774" stroke="#3A2E44"/>
+    <text x="194" y="766" fill="#EFE7F0" font-size="12" font-weight="700">ligne_nomenclature</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="194" y="791"><tspan fill="#F2B441">PK</tspan> id · <tspan fill="#8A5E80">FK</tspan> nomenclature_id</text>
+      <text x="194" y="805"><tspan fill="#8A5E80">FK</tspan> composant_id → article</text>
+      <text x="194" y="819">quantite · <tspan fill="#8A5E80">FK</tspan> unite_id</text>
+    </g></g>
+  <!-- ordre_fabrication -->
+  <g><rect x="180" y="856" width="240" height="88" rx="8" fill="#221A28" stroke="#F2B441"/>
+    <rect x="180" y="856" width="240" height="26" rx="8" fill="#2B2033"/><rect x="180" y="874" width="240" height="8" fill="#2B2033"/>
+    <line x1="180" y1="882" x2="420" y2="882" stroke="#3A2E44"/>
+    <text x="194" y="874" fill="#F2B441" font-size="12" font-weight="700">ordre_fabrication</text>
+    <text x="410" y="874" fill="#9A8DA2" font-size="9" text-anchor="end">OF</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="194" y="899"><tspan fill="#F2B441">PK</tspan> id · reference · <tspan fill="#8A5E80">FK</tspan> nomenclature_id</text>
+      <text x="194" y="913">quantite · etat · date_prevue/faite</text>
+      <text x="194" y="927"><tspan fill="#8A5E80">FK</tspan> lot_produit_id → génère mouvements</text>
+    </g></g>
+
+  <!-- ===== réception ===== -->
+  <!-- reception -->
+  <g><rect x="560" y="656" width="230" height="82" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="560" y="656" width="230" height="26" rx="8" fill="#2B2033"/><rect x="560" y="674" width="230" height="8" fill="#2B2033"/>
+    <line x1="560" y1="682" x2="790" y2="682" stroke="#3A2E44"/>
+    <text x="574" y="674" fill="#EFE7F0" font-size="12" font-weight="700">reception</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="574" y="699"><tspan fill="#F2B441">PK</tspan> id · reference</text>
+      <text x="574" y="713">fournisseur · date · etat</text>
+    </g></g>
+  <!-- ligne_reception -->
+  <g><rect x="560" y="756" width="230" height="104" rx="8" fill="#221A28" stroke="#3A2E44"/>
+    <rect x="560" y="756" width="230" height="26" rx="8" fill="#2B2033"/><rect x="560" y="774" width="230" height="8" fill="#2B2033"/>
+    <line x1="560" y1="782" x2="790" y2="782" stroke="#3A2E44"/>
+    <text x="574" y="774" fill="#EFE7F0" font-size="12" font-weight="700">ligne_reception</text>
+    <text x="780" y="774" fill="#9A8DA2" font-size="9" text-anchor="end">génère mvt</text>
+    <g fill="#C9BFCF" font-size="10.5">
+      <text x="574" y="799"><tspan fill="#F2B441">PK</tspan> id · <tspan fill="#8A5E80">FK</tspan> reception_id</text>
+      <text x="574" y="813"><tspan fill="#8A5E80">FK</tspan> article_id</text>
+      <text x="574" y="827">quantite · <tspan fill="#8A5E80">FK</tspan> unite_id (saisie)</text>
+      <text x="574" y="841"><tspan fill="#8A5E80">FK</tspan> lot_id</text>
+    </g></g>
+</svg>
+</div>
+<div class="legend">
+  <span><b style="color:#F2B441">PK</b> clé primaire</span>
+  <span><b style="color:#8A5E80">FK</b> clé étrangère</span>
+  <span><b style="color:#7FA6E0">bleu</b> = schéma public</span>
+  <span><b style="color:#54D6C2">article</b> · <b style="color:#F2B441">mouvement</b> · <b style="color:#E97393">colis</b></span>
+  <span><b style="color:#F2B441">— génère →</b> crée des mouvements, ne modifie pas le stock</span>
+</div>
+
+<footer>
+  <b>Changements depuis la v1</b> — nommage <b>français</b> ; ajout des tables <code>tenant</code> / <code>tenant_feature</code> (schéma <code>public</code>, droits datés TRIAL/ACTIVE) ; <code>materiau</code> porte la densité ; séparation visuelle public / schéma client.<br>
+  <b>Index clés</b> — <code>mouvement</code> : (article_id, etat, date_effective), (source_id, etat), (destination_id, etat), (colis_source_id), (colis_dest_id). Table qui grossit ; le reste est du référentiel.<br>
+  <b>Perf</b> — table de snapshot (stock figé à clôture) + recalcul du delta, uniquement quand la lenteur se voit.
+</footer>
+
+</body>
+</html>

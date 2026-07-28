@@ -82,7 +82,8 @@ c'est fait » (⬆️ ascendante). Le **n° de lot** est l'identifiant qui trave
 
 ## 6ter. ⭐ NOYAU FLUX — stock DÉRIVÉ des mouvements (adopté 2026-07, schéma Odoo-like)
 
-Source : [`schema-bd-wms-gpao.html`](schema-bd-wms-gpao.html) (issu d'une session Odoo de l'utilisateur,
+Source : [`schema-bd-mini_wms-v2.html`](schema-bd-mini_wms-v2.html) — ⭐ **v2 (nommage FRANÇAIS + tables `tenant`/`tenant_feature`)**,
+supersède la v1 anglaise ; issu d'une session Odoo de l'utilisateur,
 retenu comme **socle** car il réalise SA philosophie « le stock se **CALCULE**, pas un compteur »).
 
 > 🔤 **Terminologie figée : Produit = Article = product** — MÊME concept (une fiche référentiel). Fluxo dit
