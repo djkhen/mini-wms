@@ -8,4 +8,5 @@
     <!-- Chaque évolution du schéma = un fichier SQL ajouté ICI, dans l'ordre. -->
     <include file="db/changes/001-creation-emplacement.sql"/>
     <include file="db/changes/002-creation-article.sql"/>
+    <include file="db/changes/003-creation-tiers.sql"/>
 </databaseChangeLog>
