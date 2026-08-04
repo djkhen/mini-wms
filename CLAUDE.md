@@ -188,4 +188,6 @@ Question ouverte : caisses **standardisées** (BOM statique par modèle) ou **su
 - **Droit ≠ paramétrage** : droit (vendeur/superadmin, `public.tenant_features`, TRIAL/ACTIVE + `expires_at` → expiration auto, données conservées) = le **licensing** du produit ; paramétrage (admin client, son schéma) n'affiche que ce que le droit autorise.
 - **Stock ≠ étape du flux** : réservoir **dérivé** ; **allocation = mouvement `DRAFT`** (dispo = physique − réservé) ; contrôle réception = différenciateur bois.
 - **Nommage : code métier en FRANÇAIS** (Mouvement/Article/Emplacement/Reception/Colis/OrdreFabrication/Unite/Materiau/Nomenclature) — jamais FR/EN mélangés.
-- (Détail complet de ces 4 points : `docs/conception-plateforme.md` §6quinquies.)
+- **Snapshot documents** : un document validé (Reception, CommandeAchat…) **fige** les infos du tiers (libellé + légal) au moment T, EN PLUS de la FK → renommer un tiers ne réécrit pas l'historique. Référentiels au présent, documents figés (§6septies).
+- **Formulaires paramétrables par client** : modèle **FIXE** + `config_champ` (présentation, schéma client) + rendu **générique** ; champs libres en **`champs_custom JSONB`** (jamais de colonnes/tables par client) ; règle de promotion JSONB→colonne (§6octies).
+- (Détail complet : `docs/conception-plateforme.md` §6quinquies → §6octies.)

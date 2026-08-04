@@ -99,6 +99,12 @@
       de champ obligatoire lié à un OF sur un `Mouvement` ; `Nomenclature`/`OrdreFabrication` vides pour un client flux-seul).
 - [ ] 🇫🇷 **Nommage code métier en FRANÇAIS** (déjà le cas : Article/Emplacement) — traduire les noms EN du schéma :
       `stock_move`→Mouvement, `product`→Article, `package`→Colis, `uom`→Unite, `work_order`→OrdreFabrication, etc. Jamais FR/EN mélangés.
+- [ ] 🎛️ **PARAMÉTRAGE par client (personnalisation)** — pilier vendable : modèle **FIXE** + table `config_champ`
+      (visible/obligatoire/ordre/libellé par client, dans SON schéma) + front qui **construit le formulaire dynamiquement**
+      + champs libres en **`champs_custom JSONB`** (jamais de colonnes/tables par client ; règle : promouvoir en colonne si récurrent).
+      Portée CIBLÉE : `Tiers`/`Reception`/`LigneReception` (jamais `Mouvement`). Détail : [conception §6octies](docs/conception-plateforme.md).
+- [ ] 📸 **Snapshot documents** — sur `Reception`/`CommandeAchat` : garder `tiers_id` (FK) **ET** une copie **figée**
+      (`fournisseur_libelle` + infos légales) → renommer un tiers ne réécrit pas les vieux documents. + `actif` sur `Tiers`. Détail : [conception §6septies](docs/conception-plateforme.md).
 
 ### 📄 Docs (décision à froid)
 - [ ] **Réaligner le README sur Fluxo** — il décrit encore un « mini-WMS générique » (pré-pivot plateforme).

@@ -237,6 +237,58 @@ FK `fournisseur_id→tiers`, FK **`transporteur_id→tiers`**, FK **`commande_ac
 - **Facturation VOLONTAIREMENT absente** : `prix_unitaire` sur la ligne de commande = oui (reliquat/valorisation) ; mais
   TVA/comptabilité fournisseur = **autre domaine**, à ne pas mélanger ici.
 
+## 6septies. 📸 Référentiels au présent, documents figés — le SNAPSHOT (règle transverse, 2026-07)
+
+**Principe** : un **référentiel évolue** (le tiers change de nom/adresse) ; un **document validé fige la réalité de son
+instant** (comme le `Mouvement` immuable). Un document = un **instantané**, pas une vue temps réel.
+
+**Piège évité** : si un document ne garde qu'une `FK tiers_id`, renommer le tiers **réécrit rétroactivement** tous les
+vieux documents (et la recherche sur l'ancien nom ne trouve plus rien).
+
+**Solution (snapshot sur documents)** — sur chaque document transactionnel (`Reception`, `CommandeAchat`, futures
+`Expedition`/`Vente`…), garder **les DEUX** :
+- `tiers_id` → **FK** vers le tiers (lien vivant → naviguer vers la fiche actuelle),
+- une **copie FIGÉE** au moment T : `fournisseur_libelle` (+ selon la valeur légale : `fournisseur_siret`, `fournisseur_adresse`).
+  ⚠️ Figer le **jeu d'infos pertinent**, pas juste le nom (sinon le bug revient sur l'adresse).
+
+Compléments :
+- `actif` (bool) sur `Tiers` → sortir les obsolètes des listes de saisie **sans supprimer** (ne JAMAIS renommer-écraser
+  un tiers pour « corriger » → ça altère l'historique lu via les FK).
+- Historique de noms daté (SCD Type 2) = **seulement si** retrouver un tiers par un ancien nom **dans le référentiel**
+  devient un besoin réel. Rare → **ne pas anticiper** (si activé : table append-only, le `Tiers` garde toujours la valeur actuelle).
+
+Même logique pour l'article si son libellé/prix doit être figé (ex. `prix_unitaire` sur `LigneCommandeAchat`).
+**Règle générale : ne jamais laisser un référentiel réécrire l'histoire d'un document validé.**
+
+## 6octies. 🎛️ Formulaires paramétrables PAR CLIENT — le pilier « personnalisation »
+
+Besoin : les champs saisis/affichés d'un document (ex. réception) **varient selon le client**. ⚠️ **Ne JAMAIS rendre le
+SCHÉMA paramétrable** (pas de colonnes/tables par client → divergence interdite). On paramètre la **présentation**, pas les données.
+
+**3 couches à séparer** :
+1. **Modèle (FIXE)** — la table contient *tous* les champs métier possibles ; un champ inutilisé reste `NULL`. Schéma unique pour tous.
+2. **Config d'affichage (PARAMÉTRABLE, par client)** — métadonnée d'**UI**, dans le **schéma du client** (paramétrage, pas un droit).
+3. **Rendu (GÉNÉRIQUE)** — le front lit la config et **construit le formulaire dynamiquement** (un seul écran, piloté par config).
+
+Table **`<client>.config_champ`** : `document` (RECEPTION|LIGNE_RECEPTION|…) · `champ` · `visible` · `obligatoire` ·
+`ordre` · `libelle_custom` · `type` (pour champs custom). Validation `obligatoire` **des 2 côtés** (front = ergonomie + back = sécurité).
+
+**Niveau A retenu (liste blanche)** : montrer/masquer/ordonner/rendre obligatoire des champs **qui existent en colonnes**. Couvre ~95 %.
+
+**Champs vraiment libres → colonne `champs_custom JSONB`** (PAS d'EAV) :
+- **Une seule** colonne `champs_custom JSONB` sur le document. PostgreSQL → JSONB **typé + indexable** (index GIN) : la souplesse de l'EAV sans ses défauts.
+- Définition du champ = `config_champ` ; **valeur** = `champs_custom JSONB` du document.
+- ⭐ **Règle de promotion** : le JSONB est une **salle d'attente**, pas une décharge → dès qu'un champ custom devient un
+  besoin **récurrent** (plusieurs clients) → **le promouvoir en vraie colonne**. Anti-EAV : tout ce qui est connu/fini → colonnes.
+- **Livrer un jeu par DÉFAUT** (config standard sensée, jamais un formulaire vide à configurer de zéro).
+
+**Portée du custom = CIBLÉE, pas généralisée** (« un privilège qu'une table mérite, jamais un défaut »). Tables autorisées
+**pour l'instant** : `Tiers` (client ET fournisseur), `Reception` (en-tête), `LigneReception`. **Interdits** : `Mouvement`
+(cœur immuable/auditable — JAMAIS de custom), tables techniques/jonction. On étend **table par table, sur besoin réel**.
+- Java : interface `Personnalisable` (champ `champs_custom` + validation) dont **héritent SEULEMENT** les entités concernées → hériter = choix conscient.
+
+Frontière : `config_champ` = **paramétrage** (admin client, son schéma) ≠ **droit** (`public.tenant_features`, vendeur).
+
 ## 7. Récit de migration (Uniface → moderne) — **argument portfolio**
 - **Legacy** : monolithe **Uniface** (GPAO **+** WMS même base), rustines (caisse virtuelle pour négoce),
   éditions Crystal Report, intégration Sage X3.
