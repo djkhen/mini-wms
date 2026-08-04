@@ -1,4 +1,4 @@
-package com.fluxo.flux.parametrage;
+package com.fluxo.init;
 
 import com.fluxo.flux.domain.Emplacement;
 import com.fluxo.flux.domain.TypeEmplacement;
@@ -11,9 +11,8 @@ import org.jboss.logging.Logger;
 
 /**
  * Insère quelques emplacements de démonstration au démarrage, uniquement si la
- * table est vide (DONNÉES FICTIVES). Même principe que ArticleDataInitializer
- * de gestion-stock : on évite de dupliquer les données à chaque redémarrage et
- * on illustre la persistance.
+ * table est vide (DONNÉES FICTIVES). Regroupé avec les autres seeds dans le
+ * package `com.fluxo.init` (facile à trouver / à désactiver en prod d'un bloc).
  *
  * Les emplacements couvrent les différents types (quai, réception, stockage,
  * tri, expédition) pour pouvoir tester filtres et flux dès la première démo.
