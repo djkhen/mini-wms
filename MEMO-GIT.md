@@ -117,3 +117,29 @@ main remote (à jour) 🎉
 
 💡 Rappels transverses : `commit` = sauve sur la branche courante · `push` = envoie **seulement** la branche
 courante sur son remote · `merge` = relie les branches. On met `main` à jour en **allant dessus**.
+
+---
+
+## ⚠️ Merges SANS éditeur + réparer un message (vécu le 2026-08)
+
+**Le piège** : `git merge --no-ff <branche>` **SANS `-m`** ouvre un **ÉDITEUR** (Vim sur Git Bash Windows) pour le
+message de merge → galère si on ne sait pas en sortir. **Réflexe : TOUJOURS mettre `-m`** :
+```
+git merge --no-ff feature/xxx -m "merge: ..."
+```
+
+### Sortir d'un éditeur coincé
+- ⚠️ D'abord : **clique DANS la fenêtre du terminal** (si elle n'est pas active, aucune touche ne répond !).
+- **Vim** (des `~` en début de lignes vides) : `Échap` → tape `:wq` → `Entrée` (sauve + quitte).
+- **Nano** (barre en bas `^X Exit`) : `Ctrl+X` → `Y` → `Entrée`.
+- **Vraiment bloqué** : ouvre un AUTRE terminal → `git commit --no-edit` (conclut le merge en cours avec le message
+  par défaut, **sans** éditeur). Ou `git merge --abort` pour tout annuler et refaire **avec `-m`**.
+
+### Réparer le message du DERNIER commit (pas encore poussé)
+```
+git commit --amend -m "nouveau message propre"
+```
+Remplace le message du dernier commit (marche aussi sur un commit de **merge** : garde les 2 parents, change juste le
+message). ⚠️ **Seulement si PAS encore poussé** (sinon ça réécrit un historique partagé).
+
+🧠 `--no-edit` = « garde le message par défaut, pas d'éditeur » · `--amend -m` = « refais le message du dernier commit ».
