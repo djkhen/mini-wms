@@ -1,4 +1,4 @@
-package com.fluxo.referentiel.parametrage;
+package com.fluxo.init;
 
 import com.fluxo.referentiel.domain.Article;
 import com.fluxo.referentiel.domain.ModeTracabilite;
@@ -11,12 +11,10 @@ import org.jboss.logging.Logger;
 
 /**
  * Insère quelques articles de démonstration au démarrage, UNIQUEMENT si la table
- * est vide (DONNÉES FICTIVES). Même pattern qu'EmplacementDataInitializer.
+ * est vide (DONNÉES FICTIVES). Regroupé dans `com.fluxo.init` avec les autres seeds.
  *
  * Le jeu couvre les 3 modes de traçabilité (AUCUN / LOT / SERIE) + 1 article
  * INACTIF, pour exercer les filtres (?tracabilite= et ?actif=) dès la 1re démo.
- * Thème bois (métier cible) : négoce/quincaillerie (sans traçabilité), panneaux et
- * sections (suivi par lot), caisse fabriquée (suivi par n° de série).
  *
  * ⚠️ Démo/dev uniquement : à désactiver en prod via un profil Quarkus (un client
  * arrive avec SES propres articles, cf. conception §8bis « reprise de données »).
