@@ -132,12 +132,13 @@ Question ouverte : caisses **standardisées** (BOM statique par modèle) ou **su
 ## 9. Multi-tenant
 
 - **Modèle retenu** : app partagée + **isolation par schéma Postgres** (Hibernate multi-tenant mode `SCHEMA`). 1 tenant = 1 client = 1 schéma = 1 code immuable.
-- Démarrage avec **un seul tenant `default`**, mécanique en place ; client suivant = `CREATE SCHEMA` + Flyway + 1 ligne de config.
+  → 📐 Schéma du trajet d'une requête : [`docs/archi-deploiement-mini_wms.html`](docs/archi-deploiement-mini_wms.html).
+- Démarrage avec **un seul tenant `default`**, mécanique en place ; client suivant = `CREATE SCHEMA` + Liquibase + 1 ligne de config.
 - **Le tenant vient du JWT Keycloak** (claim `tenant` ou realm par client), **jamais** d'un header/param/URL contrôlé par l'utilisateur.
 - **Résolution du tenant = frontière unique** dans le code (un seul `TenantResolver`). Rien d'autre ne sait comment on identifie un client → choix réversible.
 - Garde-fous : valider le tenant contre la liste connue (anti-injection sur nom de schéma) ; rejeter (401) si pas de tenant, jamais de fallback silencieux ; test d'intégration « token tenant A ne voit rien de tenant B ».
 - Pas de colonne `tenant_id` (c'était le modèle rejeté, trop risqué). Un client à forte exigence conformité → silo dédié possible sans changer le code métier.
-- Flyway : migrer **tous** les schémas (Hibernate a un jeu d'entités unique → la table doit exister partout). Custom pour UN client → **feature flag** (table présente partout, activée pour un tenant) ; custom lourd → **silo dédié**.
+- Liquibase : migrer **tous** les schémas (Hibernate a un jeu d'entités unique → la table doit exister partout). Custom pour UN client → **feature flag** (table présente partout, activée pour un tenant) ; custom lourd → **silo dédié**.
 
 ---
 
@@ -147,7 +148,7 @@ Question ouverte : caisses **standardisées** (BOM statique par modèle) ou **su
 - **Prod 1-3 clients** : JVM.
 - **Densité (silo 8-10 clients)** : passer en **natif** (RAM ÷4 : ~50-100 Mo vs 250-400 Mo).
 - Risques natif : closed-world GraalVM (réflexion/proxies dynamiques cassent hors extensions officielles) ; bugs qui n'apparaissent qu'en natif → **tests `@QuarkusIntegrationTest` sur le binaire natif en CI obligatoires**. Build lent/gourmand → build en CI, pas en local.
-- Règle de sécurité : rester sur les **extensions officielles Quarkus** (Panache, RESTEasy Reactive, OIDC, Flyway). Vérifier toute lib tierce hors écosystème.
+- Règle de sécurité : rester sur les **extensions officielles Quarkus** (Panache, RESTEasy Reactive, OIDC, Liquibase). Vérifier toute lib tierce hors écosystème.
 
 ---
 
@@ -155,7 +156,7 @@ Question ouverte : caisses **standardisées** (BOM statique par modèle) ou **su
 
 - **Railway** : projet depuis repo GitHub, build via **Dockerfile** (forcer, Nixpacks gère mal Quarkus). PostgreSQL en service Railway. Variables clés : `QUARKUS_DATASOURCE_JDBC_URL` (jdbc:… reconstruit depuis les vars PG), `QUARKUS_HTTP_HOST=0.0.0.0`, `QUARKUS_HTTP_PORT=${{PORT}}`. Domaine public généré, HTTPS inclus. Push = redeploy (CD gratuit).
 - **Filestore** : les pièces jointes/fichiers ne vont pas en base → volume Docker dédié, sinon perte au redémarrage.
-- **Silo (si modèle 1 un jour)** : script `provision-client.sh` à écrire **dès le client 1** (conteneur `-p` + `.env`, base/schéma + Flyway, reverse proxy wildcard `*.app.com`, DNS wildcard, realm Keycloak, backup). Le script = la doc d'infra, toujours à jour. Bash suffit jusqu'à ~15-20 clients ; au-delà, Ansible/K8s.
+- **Silo (si modèle 1 un jour)** : script `provision-client.sh` à écrire **dès le client 1** (conteneur `-p` + `.env`, base/schéma + Liquibase, reverse proxy wildcard `*.app.com`, DNS wildcard, realm Keycloak, backup). Le script = la doc d'infra, toujours à jour. Bash suffit jusqu'à ~15-20 clients ; au-delà, Ansible/K8s.
 
 ---
 
