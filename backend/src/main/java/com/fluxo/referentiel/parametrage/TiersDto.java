@@ -2,6 +2,8 @@ package com.fluxo.referentiel.parametrage;
 
 import com.fluxo.referentiel.domain.Tiers;
 
+import java.util.Map;
+
 // Le CONTRAT JSON de l'API /tiers — record + mapper statique (même pattern qu'ArticleDto).
 public record TiersDto(
         Long id,
@@ -13,7 +15,8 @@ public record TiersDto(
         boolean estFournisseur,
         boolean estTransporteur,
         boolean estClient,
-        boolean actif) {
+        boolean actif,
+        Map<String, Object> champsCustom) {
 
     static TiersDto de(Tiers t) {
         return new TiersDto(
@@ -26,6 +29,7 @@ public record TiersDto(
                 t.estFournisseur,
                 t.estTransporteur,
                 t.estClient,
-                t.actif);
+                t.actif,
+                t.champsCustom);
     }
 }
