@@ -3,6 +3,10 @@ package com.fluxo.referentiel.domain;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.util.Map;
 
 /**
  * Tiers — le partenaire POLYVALENT du référentiel (fournisseur / transporteur / client).
@@ -44,6 +48,15 @@ public class Tiers extends PanacheEntity {
     /** Utilisable ? On désactive plutôt que supprimer (préserve l'historique des documents). */
     @Column(nullable = false)
     public boolean actif = true;
+
+    /**
+     * Champs PERSONNALISÉS par client (§6octies) — colonne JSONB : des clés LIBRES, différentes
+     * selon le client (schéma). Réservoir de valeurs ; la gouvernance (quels champs, obligatoires…)
+     * viendra via `config_champ`. `@JdbcTypeCode(JSON)` = mapping natif Map ↔ jsonb PostgreSQL.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "champs_custom")
+    public Map<String, Object> champsCustom;
 
     /** Recherche par code (l'identifiant métier unique). */
     public static Tiers findByCode(String code) {

@@ -9,4 +9,5 @@
     <include file="db/changes/001-creation-emplacement.sql"/>
     <include file="db/changes/002-creation-article.sql"/>
     <include file="db/changes/003-creation-tiers.sql"/>
+    <include file="db/changes/004-ajout-champs-custom-tiers.sql"/>
 </databaseChangeLog>
