@@ -29,6 +29,36 @@ import static org.junit.jupiter.api.Assertions.*;
 @QuarkusTest
 class TiersChampsCustomTest {
 
+    /*
+     * ================== COMMENT LIRE LE JSON DE CES TESTS ==================
+     *
+     *  Chaque test envoie un corps JSON ecrit ainsi :
+     *
+     *      creer("""
+     *            { "code": "%s", "raisonSociale": "..." }
+     *            """.formatted(CODE));
+     *
+     *  1) Les triples guillemets = TEXT BLOCK (Java 15+) : une chaine sur plusieurs lignes,
+     *     SANS \n ni guillemets echappes. Sinon il faudrait ecrire "{\"code\": \"...\"}"
+     *     — illisible des que le JSON grossit.
+     *
+     *  2) %s = un EMPLACEMENT a remplir. `.formatted(CODE)` y injecte la valeur de CODE :
+     *     c'est exactement `String.format(chaine, CODE)`, mais ecrit APRES la chaine.
+     *     Le JSON reellement envoye devient donc : { "code": "TEST-AUTO-JSONB", ... }
+     *     (Cousins de %s : %d pour un entier, %.2f pour un decimal a 2 chiffres.
+     *      Plusieurs %s = plusieurs arguments, DANS L'ORDRE.)
+     *
+     *  3) POURQUOI passer par la constante plutot qu'ecrire le code en dur ? Parce que le
+     *     MEME code sert a CREER le tiers et a le SUPPRIMER dans nettoyer() @AfterEach.
+     *     En dur dans 6 tests, un renommage en oublierait un -> ce test laisserait des
+     *     dechets en base. Une seule source de verite = desynchronisation impossible.
+     *
+     *  /!\ PIEGE : dans une chaine formatee, un % LITTERAL doit etre DOUBLE. Pour envoyer
+     *      "remise": "10%", il faut ecrire 10%% — sinon UnknownFormatConversionException
+     *      a l'execution. C'est le seul cout de .formatted().
+     * =======================================================================
+     */
+
     /** Code dedie aux tests : sert aussi de cle de nettoyage (aucune collision avec les seeds). */
     private static final String CODE = "TEST-AUTO-JSONB";
 
