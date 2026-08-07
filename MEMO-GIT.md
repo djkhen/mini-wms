@@ -143,3 +143,70 @@ Remplace le message du dernier commit (marche aussi sur un commit de **merge** :
 message). ⚠️ **Seulement si PAS encore poussé** (sinon ça réécrit un historique partagé).
 
 🧠 `--no-edit` = « garde le message par défaut, pas d'éditeur » · `--amend -m` = « refais le message du dernier commit ».
+
+---
+
+## ❓ « Est-ce que j'ai oublié un push ? » — `git status -sb`
+
+Ne jamais se fier à sa mémoire : **la réponse est affichée en permanence**, sur la 1ʳᵉ ligne.
+```
+git status -sb
+```
+- `## main...origin/main **[ahead 4]**` → **4 commits sur mon disque uniquement** = un `git push` m'attend.
+- `## main...origin/main` (rien entre crochets) → **tout est envoyé**, rien en attente. ✅
+- `[behind 2]` → le remote a 2 commits que je n'ai pas → `git pull`.
+- `[ahead 1, behind 2]` → les deux ont avancé chacun de leur côté → `git pull` **puis** `git push`.
+
+⚠️ Un `push` n'envoie **que des COMMITS**. Les fichiers modifiés mais **non commités** (les lignes ` M fichier`)
+ne partent jamais : ils restent tranquillement dans le répertoire de travail. Pousser n'est donc **jamais**
+dangereux pour du travail en cours.
+
+🧠 Résumé : **`[ahead N]` = N commits à pousser.** Quand la mention disparaît, c'est fait.
+
+---
+
+## 🫧 Lire l'historique : la « BULLE » du merge — et le lien avec Azure DevOps
+
+Pour **voir** la forme de l'historique (et pas seulement la liste) :
+```
+git log --graph --oneline --decorate -10
+```
+
+Exemple réel du projet :
+```
+* e2608b0 docs(test): explique text block, %s et .formatted   ← LIGNE DROITE (commit direct sur main)
+*   0d1d16a merge: regles de typage champs_custom
+|\                                                             ← BULLE = un merge
+| * 7999f28 docs: regles de typage du champs_custom JSONB
+|/
+*   5a96684 merge: champs custom JSONB sur tiers
+|\                                                             ← BULLE
+| * 5f7a1f8 feat(tiers): champs personnalisables par client
+|/
+```
+
+**Un merge fusionne DEUX lignes d'histoire** → il dessine une bulle. Donc :
+> **Pas de branche = rien à fusionner = PAS de merge.**
+
+Si on commite directement sur `main`, le merge n'a pas été « oublié » : il était **sans objet**. Ce n'est
+pas cassé, mais l'historique perd sa lisibilité — une bulle raconte *« voici un sujet traité de bout en bout »*,
+un commit isolé ne raconte rien.
+
+**Le rôle exact de `--no-ff`** : c'est lui qui **FORCE la bulle**. Sans lui, quand `main` n'a pas bougé pendant
+le travail, Git « aplatit » la branche en ligne droite (*fast-forward*) et le regroupement disparaît de l'historique.
+
+### 🔗 Équivalence Azure DevOps (vécu au travail, sans connaître la syntaxe)
+| Interface Azure DevOps / GitHub | Ligne de commande |
+|---|---|
+| Créer une branche dans l'UI | `git checkout -b feature/x` |
+| Pousser / publier la branche | `git push -u origin feature/x` |
+| **Créer une Pull Request** puis **Complete** | `git checkout main` + `git merge --no-ff feature/x -m "…"` + `git push` |
+
+👉 **La bulle du graphe, c'est la PR.** Le bouton *Complete* exécute un `merge --no-ff` côté serveur : c'est
+exactement le même geste, fait par la plateforme au lieu de l'être à la main.
+
+⚠️ **On ne « répare » pas un commit déjà poussé** pour lui ajouter une bulle : il faudrait réécrire l'historique
+(`push --force`), infiniment plus risqué qu'une ligne droite dans le graphe. On assume et on continue.
+
+🧠 Règle tenable en solo : **un sujet = une branche = un merge**, même pour 3 lignes de commentaire.
+Les exceptions arrivent bien assez tôt toutes seules.
