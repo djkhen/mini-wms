@@ -53,6 +53,15 @@ public class Tiers extends PanacheEntity {
      * Champs PERSONNALISÉS par client (§6octies) — colonne JSONB : des clés LIBRES, différentes
      * selon le client (schéma). Réservoir de valeurs ; la gouvernance (quels champs, obligatoires…)
      * viendra via `config_champ`. `@JdbcTypeCode(JSON)` = mapping natif Map ↔ jsonb PostgreSQL.
+     *
+     * ⚠️ TYPES — JSON n'en connaît que 6 : texte, nombre, booléen, null, tableau, objet.
+     *  • Pas de type DATE → stocker en TEXTE ISO 8601 ("2026-08-07", "2026-08-07T14:30:00") :
+     *    tri alphabétique = tri chronologique, et cast SQL direct `(champs_custom->>'x')::date`.
+     *    JAMAIS "07/08/2026" (ambigu, ni triable ni castable) — le format d'affichage = le FRONT.
+     *  • JAMAIS d'argent / quantité / poids ici (décimal → Double = arithmétique approximative) :
+     *    tout ce qui entre dans un calcul ou une contrainte mérite une vraie colonne NUMERIC.
+     *  • Aucun type n'est imposé par la colonne (elle accepte "entier":"quinze") : c'est un
+     *    RÉSERVOIR, pas un contrat → `config_champ.type` déclare, l'appli VALIDE avant écriture.
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "champs_custom")

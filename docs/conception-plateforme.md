@@ -282,6 +282,20 @@ Table **`<client>.config_champ`** : `document` (RECEPTION|LIGNE_RECEPTION|…) �
   besoin **récurrent** (plusieurs clients) → **le promouvoir en vraie colonne**. Anti-EAV : tout ce qui est connu/fini → colonnes.
 - **Livrer un jeu par DÉFAUT** (config standard sensée, jamais un formulaire vide à configurer de zéro).
 
+**Types stockables dans `champs_custom`** — JSON n'en connaît que **6** : `string`, `number`, `boolean`, `null`, `array`, `object`
+(vérifié par test : Java ↔ JSONB fait l'aller-retour fidèlement, objets imbriqués compris) :
+- ⚠️ **AUCUN type DATE en JSON** → une date se stocke **en texte ISO 8601** : `"2026-08-07"` / `"2026-08-07T14:30:00"`.
+  Ce format a deux vertus : le **tri alphabétique = tri chronologique**, et le **cast SQL direct** — `(champs_custom->>'dateIso')::date + 30` fonctionne.
+  ⛔ **Interdit** : `"07/08/2026"` (ambigu jj/mm ou mm/jj, ni triable ni castable). **Le format d'affichage est l'affaire du FRONT, jamais du stockage.**
+- ⛔ **Jamais d'argent, de quantité ni de poids** dans le JSONB : Jackson désérialise un décimal en `Double` (arithmétique binaire
+  approximative), et `12.50` revient `12.5`. Tout ce qui entre dans un **calcul, un total ou une contrainte** → **vraie colonne typée**
+  (`NUMERIC`). Ex. la **pesée** en réception = colonne, jamais une clé JSON. *Le JSONB accompagne le métier, il ne le porte pas.*
+- **Le JSONB n'impose AUCUN type** : la colonne accepte `"entier": "quinze"` sans broncher. C'est un **réservoir, pas un contrat** →
+  le type est déclaré par `config_champ.type` et **validé par l'application AVANT écriture** (back = sécurité, front = ergonomie).
+- **Indexation** (le jour où le volume l'exige, pas avant) : un index **GIN** accélère `@>` et `?`, **PAS `->>`**.
+  Pour un champ précis très filtré chez un client → **index B-tree d'expression** `((champs_custom->>'x'))`, plus petit et ciblé.
+  Bénéfice de l'archi 1 schéma/client : **on indexe client par client, selon SES champs**.
+
 **Portée du custom = CIBLÉE, pas généralisée** (« un privilège qu'une table mérite, jamais un défaut »). Tables autorisées
 **pour l'instant** : `Tiers` (client ET fournisseur), `Reception` (en-tête), `LigneReception`. **Interdits** : `Mouvement`
 (cœur immuable/auditable — JAMAIS de custom), tables techniques/jonction. On étend **table par table, sur besoin réel**.
