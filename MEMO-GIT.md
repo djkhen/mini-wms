@@ -5,6 +5,76 @@
 
 ---
 
+# ⭐ AU TRAVAIL — workflow par PULL REQUEST (à lire en premier)
+
+> Le workflow **B** : c'est **la plateforme** (Azure DevOps) qui fait le merge, pas moi.
+> Ici la branche d'intégration s'appelle **`develop`** (même rôle que `main` sur mini-wms).
+> *(Le workflow **A**, tout en local, est décrit plus bas — voir « DEUX façons d'intégrer une feature ».)*
+
+### 1. Partir d'un `develop` À JOUR
+```
+git checkout develop
+git pull                              ← sinon je pars d'une base vieille de 3 jours
+git checkout -b feature/x             ← je crée MA ligne de travail
+```
+
+### 2. Travailler
+```
+git add .
+git commit -m "mon message"           ← ⚠️ le -m est OBLIGATOIRE (sinon éditeur qui s'ouvre)
+```
+👉 Le commit est sur **`feature/x` LOCAL** — `develop` n'en sait encore **rien**.
+
+### 3. Publier la branche
+```
+git push -u origin feature/x          ← ⚠️ le NOM de la branche est requis
+```
+👉 Envoie `feature/x` → `origin/feature/x`. **Ni PR, ni merge** : juste une sauvegarde sur le serveur.
+Le `-u` ne se met **qu'au premier push** de la branche ; ensuite `git push` tout court suffit.
+
+### 4. Ouvrir la PR (dans l'interface)
+👉 C'est la **demande** de fusionner `feature/x` dans `develop`. Rien ne bouge tant qu'elle n'est pas *Complete*.
+
+### 5. Si des collègues ont livré entre-temps → se remettre à jour
+```
+git pull origin develop               ← DEPUIS feature/x : ramène develop DANS ma branche
+   ... je résous les conflits ...
+git push                              ← met la PR à JOUR automatiquement (pas de nouvelle PR)
+```
+⚠️ **Piège** : `git merge develop` fusionnerait mon `develop` **LOCAL**, peut-être périmé !
+`git pull origin develop` (= `fetch` + `merge`) garantit le **vrai** `develop`, celui du serveur.
+
+### 6. ⏸️ ON S'ARRÊTE LÀ — la PR est asynchrone
+Elle attend une **relecture** et/ou la **CI**. On ne reste pas devant : **on passe à la tâche suivante.**
+
+- **Tâche indépendante** (cas normal) → repartir de `develop` à jour :
+  ```
+  git checkout develop
+  git pull
+  git checkout -b feature/y
+  ```
+- **Tâche qui dépend de `feature/x`** (encore en PR) → *branches empilées*, à éviter si possible :
+  ```
+  git checkout -b feature/y feature/x
+  ```
+  (`feature/y` traînera les commits de `x` dans sa PR tant que celle de `x` n'est pas passée.)
+
+⚠️ **Avant tout `checkout`, tout doit être COMMITÉ**, sinon git refuse ou emporte les modifs avec lui.
+Au milieu de quelque chose ? → `git stash` … puis `git stash pop` en revenant.
+
+### 7. Plus tard, quand la PR est *Complete* → rapatrier
+```
+git checkout develop
+git pull                              ← récupère le merge fait par LE SERVEUR
+git branch -d feature/x               ← ménage (la branche a fait son travail)
+```
+💡 Azure DevOps / GitHub proposent une case **« supprimer la branche après le merge »** : la cocher évite de le faire à la main.
+
+🧠 **En une phrase** : *je pousse, j'ouvre la PR, je repars de `develop` à jour sur la tâche suivante — et je
+reviens chercher le résultat quand la PR est passée.*
+
+---
+
 ## Renommer une branche — `git branch -m` (`-m` comme *move*)
 
 ⚠️ Il n'existe **PAS** de `git rename`. Le renommage de branche passe par `git branch -m`.
@@ -210,3 +280,128 @@ exactement le même geste, fait par la plateforme au lieu de l'être à la main.
 
 🧠 Règle tenable en solo : **un sujet = une branche = un merge**, même pour 3 lignes de commentaire.
 Les exceptions arrivent bien assez tôt toutes seules.
+
+---
+
+## 🔀 DEUX façons d'intégrer une feature — ne jamais les mélanger
+
+**Le merge n'est JAMAIS optionnel : il est seulement DÉPLACÉ.** Soit je le fais en local, soit la plateforme
+(GitHub / Azure DevOps) le fait via la **Pull Request**. `git pull` ne *crée* aucun merge de ma feature :
+il **récupère** un merge que quelqu'un a déjà fait.
+
+| | **A — tout en local** (nos sessions mini-wms) | **B — par PR** (workflow du travail, Azure DevOps) |
+|---|---|---|
+| 1 | `git checkout -b feature/x` | `git checkout -b feature/x` |
+| 2 | `git commit -m "…"` | `git commit -m "…"` |
+| 3 | `git push -u origin feature/x` *(optionnel)* | `git push -u origin feature/x` ← **obligatoire** |
+| 4 | `git checkout main` puis `git merge --no-ff feature/x -m "…"` | **PR → Merge / Complete** (le serveur fait le merge) |
+| 5 | `git push` | `git checkout main` puis `git pull` |
+
+⚠️ **Sans PR, un `pull` sur `main` ne ramène RIEN de ma feature** — `git pull` = `git fetch` + `git merge origin/main`,
+il ne va jamais chercher `origin/feature/x`. Ce n'est pas une régression pour autant : `main` reste simplement
+inchangé, et **le travail n'est jamais perdu** — il attend sagement dans la branche, intégrable des semaines plus tard.
+
+⚠️ **Ne pas cumuler A et B** (merge local **+** PR) → deux merges du même travail.
+
+---
+
+## ⬇️ Synchroniser SA branche avec `main` — le merge dans l'AUTRE sens
+
+Pendant que je travaille sur `feature/x`, `main` avance (PR d'un collègue mergée). Avant de livrer, je ramène
+`main` **dans ma branche** pour découvrir les conflits **chez moi** :
+```
+git pull origin main          ← depuis feature/x
+```
+
+**Pourquoi c'est une bonne pratique** :
+1. Les conflits se résolvent **dans ma branche**, où ça ne bloque personne — au lieu de coincer une PR attendue.
+2. Je vérifie que mon code marche **avec** le travail des autres, pas seulement avec le `main` d'il y a 3 jours.
+3. Plus j'attends, plus le conflit grossit → synchroniser **souvent** coûte moins cher.
+
+⚠️ **Le piège de syntaxe** (les deux ne font PAS la même chose) :
+- `git pull` **seul** sur `feature/x` → ramène `origin/feature/x` (ma propre branche distante). Inutile si je suis seul dessus.
+- `git pull origin main` → ramène **`main`** dans ma feature. ✅ **C'est celui-là.**
+
+🧠 **Les 2 sens du merge** :
+- **`main` → ma feature** (`git pull origin main`) = *je me mets à jour / je reste compatible.* **Autant de fois que je veux.**
+- **ma feature → `main`** (PR, ou `git merge --no-ff`) = *je livre.* **Une seule fois, à la fin.**
+
+---
+
+## 🆘 « J'ai oublié `checkout -b` : j'ai commité sur `main` ! » (vécu le 2026-08-07)
+
+**Symptômes** : le prompt Git Bash affiche `(main)` alors que je croyais être sur ma branche, et le push échoue :
+```
+error: src refspec docs/mon-sujet does not match any
+```
+→ traduction : **cette branche n'existe pas**. Mes commits sont sur `main` local.
+
+**La clé** : une branche est une **ÉTIQUETTE posée sur un commit**, pas une copie. Je pose une 2ᵉ étiquette
+ici, puis je **recule** celle de `main`. **Les commits ne bougent jamais.**
+```
+AVANT :   ●──●──● ← main            (origin/main est resté 2 commits en arrière)
+
+APRÈS :   ●──●──● ← docs/mon-sujet
+             ↑
+          main = origin/main
+```
+
+**Les 4 commandes — l'ORDRE fait la sécurité** :
+```
+git checkout -b docs/mon-sujet        ← pose l'étiquette ICI (capture les commits) + s'y déplace
+git push -u origin docs/mon-sujet     ← ⭐ met les commits en SÉCURITÉ sur GitHub AVANT tout reset
+git checkout main
+git reset --hard origin/main          ← recule l'étiquette main à l'état du serveur
+```
+Puis le cycle normal reprend, et le merge crée enfin la bulle :
+```
+git merge --no-ff docs/mon-sujet -m "merge: ..."
+git push
+```
+
+⚠️ **`git reset --hard` est la commande la plus destructrice de git** : elle supprime définitivement les
+modifications **non commitées**. Ne l'utiliser QUE si les **2 conditions** sont réunies :
+1. `git status` **totalement propre** (aucune ligne de fichier) ;
+2. les commits abandonnés sont **récupérables ailleurs** (branche créée **ET** poussée → d'où l'ordre ci-dessus).
+
+**Jamais** sur une branche partagée déjà poussée.
+
+💡 **Après le reset, mes fichiers semblent revenus en arrière → c'est NORMAL**, pas une perte : le répertoire
+de travail **suit la branche**. `main` pointe sur un commit antérieur, donc git réécrit les fichiers en
+conséquence. Le `merge` les ramène instantanément.
+
+🧠 **Prévention** : le prompt Git Bash affiche la branche **entre parenthèses**. Voir `(main)` avant de
+commiter = **STOP, je crée ma branche d'abord**. Et `git checkout -b` **emporte** les modifications en
+cours avec lui : on peut donc créer la branche même après avoir commencé à travailler.
+
+---
+
+## 💥 « Mon commit a SUPPRIMÉ des lignes que je n'ai pas touchées ! » — l'IDE écrase le fichier
+
+**Vécu le 2026-08-07** : un commit affiche `1 file changed, 115 deletions(-)` alors qu'on voulait **ajouter**
+du texte. Le fichier commité était une **version périmée**.
+
+**La cause** : le fichier était **ouvert dans l'IDE** (IntelliJ / VS Code) avec l'ancien contenu **en mémoire**.
+Quand git modifie le fichier sur le disque (`reset`, `checkout`, `merge`) puis que l'IDE sauvegarde — auto-save
+ou Ctrl+S — **l'IDE écrase le disque avec son buffer périmé**. Git commite alors sagement ce qu'il voit.
+
+**Le réflexe qui évite tout** :
+> ⭐ **FERMER (ou recharger) dans l'IDE les fichiers qu'une commande git va modifier.**
+
+**Détecter** — toujours regarder le résumé après un commit :
+```
+1 file changed, 115 deletions(-)     ← ⚠️ QUE des suppressions alors que j'ajoutais ?!
+```
+Et **avant** de commiter, vérifier ce qui part vraiment :
+```
+git diff --stat            (non préparé)   ·   git diff --staged --stat   (préparé)
+```
+
+**Réparer** (sans réécrire l'historique, même si le commit est déjà poussé) :
+```
+git checkout main -- le-fichier.md        ← récupère la BONNE version depuis une autre branche
+   ... on refait les modifs voulues ...
+git commit -m "fix: restaure les lignes ecrasees + ..."
+```
+🧠 `git checkout <branche> -- <fichier>` = **« reprends CE fichier tel qu'il est là-bas »**. Rien n'est jamais
+perdu : chaque version vit dans un commit.
