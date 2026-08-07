@@ -355,7 +355,7 @@ NIVEAU 3 — fonctionnalités (packages/module)  : reception/ │ expedition/ �
 ```
 📦 core-metier                    ← 1 projet Quarkus, 1 déploiement
  ├── com.fluxo.flux              ← domaine WMS
- │    ├── domain/  (Stock, Mouvement, Lot, Emplacement — entités PARTAGÉES du domaine)
+ │    ├── domain/  (Mouvement, Article, Lot, Emplacement — PAS de table Stock : elle est DÉRIVÉE)
  │    ├── reception/  expedition/  nonconformite/  inventaire/   ← fonctionnalités
  ├── com.fluxo.gpao              ← domaine GPAO
  │    ├── domain/  modeles/  of/  debit/
@@ -420,7 +420,7 @@ Candidats : **Fluxo** ⭐, Optiflux, Locus, Traxo, Célérix, StockFlow, Novaflu
 > Commencer par un **flux qui marche de bout en bout**.
 
 1. **Paramétrage : `Article`** (avec `ModeTracabilite` AUCUN/LOT/SERIE → le n° lot est **optionnel**) **+ `Emplacement`** — CRUD simple, les fondations.
-2. **`Réception`** — le 1er vrai flux : réceptionner un article (n° lot si activé) à un emplacement → **crée/incrémente `Stock` + un `Mouvement`**. Démontrable tout de suite, exerce le cœur (stock/lot/traçabilité).
+2. **`Réception`** — le 1er vrai flux : réceptionner un article (n° lot si activé) à un emplacement → **génère un `Mouvement` `FOURNISSEUR → Emplacement`** ; le stock **APPARAÎT** par dérivation (⚠️ aucune table `Stock` à créer/incrémenter — §6ter). Démontrable tout de suite, exerce le cœur (mouvement/lot/traçabilité).
 3. **Dashboard** = simple menu de liens d'abord ; « widgets configurables par l'admin » = **v2**.
 
 **Alignement** : Réception (backend) = **Quarkus** (focus) ; l'écran = un peu de **Flutter** (certif). La **plateforme devient le projet backend principal** ; gestion-stock s'y fond. Point de reprise probable : branche `feature/backend-emplacement` (entité `Emplacement` déjà amorcée).
