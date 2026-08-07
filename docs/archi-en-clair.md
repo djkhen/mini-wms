@@ -31,7 +31,7 @@ C'était LE malentendu (et tu l'as compris) :
 - **Domaine** (flux, gpao, referentiel) = **qui POSSÈDE les données** → frontière de service possible.
 
 > 🔑 **Le test** : si deux « services » ont besoin des **mêmes tables** → c'est **UN SEUL** service.
-> Réception, expédition et NC touchent tous `Stock`/`Mouvement`/`Lot` → même domaine (`flux`), répertoires différents.
+> Réception, expédition et NC touchent tous `Mouvement`/`Lot`/`Emplacement` → même domaine (`flux`), répertoires différents.
 
 ```
 📦 core-metier                      ← 1 projet Quarkus, 1 déploiement
@@ -83,24 +83,34 @@ elle **demande** au module flux).
 
 ---
 
-## 5. « Mais l'article possède bien des emplacements ? » → **NON : c'est le `Stock` qui fait le lien**
+## 5. « Mais l'article possède bien des emplacements ? » → **NON : c'est le `Mouvement` qui fait le lien**
 
 L'image du supermarché :
 - la **fiche produit** (Article) ne sait pas où elle est rangée ;
 - le **rayon** (Emplacement) ne sait pas ce qu'il contient ;
-- c'est l'**inventaire** (Stock) qui dit « 40 pots au rayon 12 ».
+- c'est le **journal des entrées/sorties** (Mouvement) qui permet de dire « 40 pots au rayon 12 ».
+
+⚠️ **Nuance capitale (§6ter)** : ce « 40 » n'est **stocké NULLE PART** — il est **CALCULÉ** (Σ entrées − Σ sorties).
+L'ancienne table `Stock(quantité)` était un **compteur** = l'anti-pattern → **abandonnée**.
 
 ```
 Article "PLANCHE-22"          Emplacement "A-01-03"
         └───────────┐   ┌───────────┘
                     ▼   ▼
-              Stock (article, emplacement, lot, quantité)   ⭐ LE lien
-              "150 PLANCHE-22 en A-01-03, lot L-2026-0345"
+   Mouvement (article, lot, quantité>0, source → destination, date, état)   ⭐ LE lien
+   "150 PLANCHE-22 : FOURNISSEUR → A-01-03, le 12/03, lot L-2026-0345"
+                    │
+                    ▼   Σ des mouvements DONE  (une REQUÊTE, jamais une table)
+   Stock "150 PLANCHE-22 en A-01-03, lot L-2026-0345"
 ```
 
 - Un article peut être à **10 emplacements** ; un emplacement peut contenir **10 articles**.
-- `Stock` a la contrainte unique `(article, emplacement, lot)`.
+- `(article, emplacement, lot)` n'est plus une **contrainte d'unicité** sur une table `Stock` :
+  c'est désormais la **clé de regroupement** (`GROUP BY`) de la requête qui dérive le stock.
 - **L'article "se trouve à" des emplacements — il ne les "possède" pas.**
+
+🧠 Le gain : le stock **à n'importe quelle date passée** devient gratuit (filtrer sur la date du mouvement),
+et l'historique est **auditable** — impossible avec un compteur qu'on écrase à chaque opération.
 
 ---
 

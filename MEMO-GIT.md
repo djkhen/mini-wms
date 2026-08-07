@@ -5,6 +5,76 @@
 
 ---
 
+# ⭐ AU TRAVAIL — workflow par PULL REQUEST (à lire en premier)
+
+> Le workflow **B** : c'est **la plateforme** (Azure DevOps) qui fait le merge, pas moi.
+> Ici la branche d'intégration s'appelle **`develop`** (même rôle que `main` sur mini-wms).
+> *(Le workflow **A**, tout en local, est décrit plus bas — voir « DEUX façons d'intégrer une feature ».)*
+
+### 1. Partir d'un `develop` À JOUR
+```
+git checkout develop
+git pull                              ← sinon je pars d'une base vieille de 3 jours
+git checkout -b feature/x             ← je crée MA ligne de travail
+```
+
+### 2. Travailler
+```
+git add .
+git commit -m "mon message"           ← ⚠️ le -m est OBLIGATOIRE (sinon éditeur qui s'ouvre)
+```
+👉 Le commit est sur **`feature/x` LOCAL** — `develop` n'en sait encore **rien**.
+
+### 3. Publier la branche
+```
+git push -u origin feature/x          ← ⚠️ le NOM de la branche est requis
+```
+👉 Envoie `feature/x` → `origin/feature/x`. **Ni PR, ni merge** : juste une sauvegarde sur le serveur.
+Le `-u` ne se met **qu'au premier push** de la branche ; ensuite `git push` tout court suffit.
+
+### 4. Ouvrir la PR (dans l'interface)
+👉 C'est la **demande** de fusionner `feature/x` dans `develop`. Rien ne bouge tant qu'elle n'est pas *Complete*.
+
+### 5. Si des collègues ont livré entre-temps → se remettre à jour
+```
+git pull origin develop               ← DEPUIS feature/x : ramène develop DANS ma branche
+   ... je résous les conflits ...
+git push                              ← met la PR à JOUR automatiquement (pas de nouvelle PR)
+```
+⚠️ **Piège** : `git merge develop` fusionnerait mon `develop` **LOCAL**, peut-être périmé !
+`git pull origin develop` (= `fetch` + `merge`) garantit le **vrai** `develop`, celui du serveur.
+
+### 6. ⏸️ ON S'ARRÊTE LÀ — la PR est asynchrone
+Elle attend une **relecture** et/ou la **CI**. On ne reste pas devant : **on passe à la tâche suivante.**
+
+- **Tâche indépendante** (cas normal) → repartir de `develop` à jour :
+  ```
+  git checkout develop
+  git pull
+  git checkout -b feature/y
+  ```
+- **Tâche qui dépend de `feature/x`** (encore en PR) → *branches empilées*, à éviter si possible :
+  ```
+  git checkout -b feature/y feature/x
+  ```
+  (`feature/y` traînera les commits de `x` dans sa PR tant que celle de `x` n'est pas passée.)
+
+⚠️ **Avant tout `checkout`, tout doit être COMMITÉ**, sinon git refuse ou emporte les modifs avec lui.
+Au milieu de quelque chose ? → `git stash` … puis `git stash pop` en revenant.
+
+### 7. Plus tard, quand la PR est *Complete* → rapatrier
+```
+git checkout develop
+git pull                              ← récupère le merge fait par LE SERVEUR
+git branch -d feature/x               ← ménage (la branche a fait son travail)
+```
+💡 Azure DevOps / GitHub proposent une case **« supprimer la branche après le merge »** : la cocher évite de le faire à la main.
+
+🧠 **En une phrase** : *je pousse, j'ouvre la PR, je repars de `develop` à jour sur la tâche suivante — et je
+reviens chercher le résultat quand la PR est passée.*
+
+---
+
 ## Renommer une branche — `git branch -m` (`-m` comme *move*)
 
 ⚠️ Il n'existe **PAS** de `git rename`. Le renommage de branche passe par `git branch -m`.
@@ -210,3 +280,48 @@ exactement le même geste, fait par la plateforme au lieu de l'être à la main.
 
 🧠 Règle tenable en solo : **un sujet = une branche = un merge**, même pour 3 lignes de commentaire.
 Les exceptions arrivent bien assez tôt toutes seules.
+
+---
+
+## 🔀 DEUX façons d'intégrer une feature — ne jamais les mélanger
+
+**Le merge n'est JAMAIS optionnel : il est seulement DÉPLACÉ.** Soit je le fais en local, soit la plateforme
+(GitHub / Azure DevOps) le fait via la **Pull Request**. `git pull` ne *crée* aucun merge de ma feature :
+il **récupère** un merge que quelqu'un a déjà fait.
+
+| | **A — tout en local** (nos sessions mini-wms) | **B — par PR** (workflow du travail, Azure DevOps) |
+|---|---|---|
+| 1 | `git checkout -b feature/x` | `git checkout -b feature/x` |
+| 2 | `git commit -m "…"` | `git commit -m "…"` |
+| 3 | `git push -u origin feature/x` *(optionnel)* | `git push -u origin feature/x` ← **obligatoire** |
+| 4 | `git checkout main` puis `git merge --no-ff feature/x -m "…"` | **PR → Merge / Complete** (le serveur fait le merge) |
+| 5 | `git push` | `git checkout main` puis `git pull` |
+
+⚠️ **Sans PR, un `pull` sur `main` ne ramène RIEN de ma feature** — `git pull` = `git fetch` + `git merge origin/main`,
+il ne va jamais chercher `origin/feature/x`. Ce n'est pas une régression pour autant : `main` reste simplement
+inchangé, et **le travail n'est jamais perdu** — il attend sagement dans la branche, intégrable des semaines plus tard.
+
+⚠️ **Ne pas cumuler A et B** (merge local **+** PR) → deux merges du même travail.
+
+---
+
+## ⬇️ Synchroniser SA branche avec `main` — le merge dans l'AUTRE sens
+
+Pendant que je travaille sur `feature/x`, `main` avance (PR d'un collègue mergée). Avant de livrer, je ramène
+`main` **dans ma branche** pour découvrir les conflits **chez moi** :
+```
+git pull origin main          ← depuis feature/x
+```
+
+**Pourquoi c'est une bonne pratique** :
+1. Les conflits se résolvent **dans ma branche**, où ça ne bloque personne — au lieu de coincer une PR attendue.
+2. Je vérifie que mon code marche **avec** le travail des autres, pas seulement avec le `main` d'il y a 3 jours.
+3. Plus j'attends, plus le conflit grossit → synchroniser **souvent** coûte moins cher.
+
+⚠️ **Le piège de syntaxe** (les deux ne font PAS la même chose) :
+- `git pull` **seul** sur `feature/x` → ramène `origin/feature/x` (ma propre branche distante). Inutile si je suis seul dessus.
+- `git pull origin main` → ramène **`main`** dans ma feature. ✅ **C'est celui-là.**
+
+🧠 **Les 2 sens du merge** :
+- **`main` → ma feature** (`git pull origin main`) = *je me mets à jour / je reste compatible.* **Autant de fois que je veux.**
+- **ma feature → `main`** (PR, ou `git merge --no-ff`) = *je livre.* **Une seule fois, à la fin.**
