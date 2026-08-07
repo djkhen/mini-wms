@@ -192,12 +192,15 @@ actuel tracking/flux (GCA) + IA réunis en une plateforme moderne (cf. [[gpao-un
 - [ ] ⚠️ **Ambitieux** → construire en **tranches**, pas tout d'un coup. Statut : **capture uniquement**
       (projet en pause, focus = certif Flutter + backend Quarkus).
 - [ ] 💥 **GÉNÉRALISATION (idée user 2026-07-03) — négoce + fabrication + stock, un seul moteur** :
-      un **négoce** (achat-revente sans fabriquer) = un **OF dégénéré** (article sans gamme/opérations).
-      ⇒ **gestion-stock n'est pas un projet à part** : c'est la base « article + stock » partagée par les
-      2 modes, qui **se dissout dans la plateforme**. **Marché élargi** : fabricants **ET** négociants/
-      distributeurs (mêmes prospects potentiels, même produit). ⚠️ Design : prévoir une **abstraction
-      commune** `Ordre (flux)` → variantes `OF Fabrication` (gamme+ordo) / `Ordre Négoce` (appro→vente),
-      plutôt que forcer le négoce dans l'OF de prod.
+      un **négoce** = achat-revente **sans fabriquer**. ⇒ **gestion-stock n'est pas un projet à part** :
+      c'est la base « article + stock » partagée par les 2 modes, qui **se dissout dans la plateforme**.
+      **Marché élargi** : fabricants **ET** négociants/distributeurs (mêmes prospects, même produit).
+      ⚠️ **CORRIGÉ le 2026-08-07** — l'idée initiale (« négoce = **OF dégénéré** » + abstraction commune
+      `Ordre (flux)` avec variantes) est **ABANDONNÉE** : une commande réelle **mélange** fabrication et
+      négoce, donc aucun objet ne peut choisir son sous-type. Le modèle retenu = `CommandeClient` +
+      **lignes hétérogènes**, le type étant **déduit** de l'article (avec ou sans `Nomenclature`), et
+      l'unification se faisant **par le bas** (tout finit en `Mouvement`). Cf. §2 de
+      [`conception-plateforme.md`](docs/conception-plateforme.md).
 - [ ] Nom : si l'appli couvre **production + flux**, le nom devra peut-être embrasser les deux (Fluxo =
       candidat parapluie, ou nom plus large à trouver).
 

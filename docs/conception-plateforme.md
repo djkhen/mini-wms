@@ -17,17 +17,40 @@ Une **plateforme unique** qui gère le **flux industriel de bout en bout** — d
 - **Marché élargi** : fabricants **+** négociants/distributeurs (même produit, plus de prospects).
 - **Origine** : modernisation de l'appli GPAO **Uniface** (legacy) de l'auteur → **récit de migration** fort.
 
-## 2. Concept central : l'**Ordre (flux)**
+## 2. Concept central : la **Commande et ses LIGNES** *(révisé le 2026-08-07)*
 ```
-Ordre (flux)                       ← abstraction parente
- ├── OF Fabrication   (gamme + opérations + ordonnancement) → produit des Caisses (physiques)
- └── Ordre Négoce     (appro → vente, sans opérations)      → Articles / Prestations
+CommandeClient   (l'affaire / le dossier)              ← objet COMMERCIAL
+ │   client, dates, conditions, tarif → BL, facture
+ ├── Ligne · article AVEC Nomenclature   → génère un OrdreFabrication (GPAO)
+ ├── Ligne · article SANS Nomenclature   → NÉGOCE : allocation → expédition, AUCUN OF
+ └── Ligne · prestation                  → ni stock ni OF (service facturé)
 ```
-- **Négoce = OF dégénéré** (sans gamme).
+- ❌ **ABANDONNÉ : l'abstraction parente `Ordre`** avec 2 sous-types (`OF Fabrication` / `Ordre Négoce`).
+  Une commande réelle **MÉLANGE les deux** (3 caisses fabriquées **+** 40 sangles revendues telles quelles) →
+  un objet ne peut pas choisir son sous-type. **Le « type » appartient à la LIGNE, jamais à la commande** —
+  et il ne se saisit même pas : il se **DÉDUIT** de l'article (avec ou sans `Nomenclature`).
+- ❌ **« Négoce = OF dégénéré » est FAUX** (formule héritée du legacy). Un flux de négoce n'est pas une
+  fabrication vide : c'est **une suite de mouvements SANS étape de production** — les étapes ⑤/⑥ du
+  [parcours produit](parcours-produit-mini_wms.html) sont simplement **absentes**. Aucun objet fantôme.
+- **L'OF DESCEND d'une ligne** (0 ou 1), il ne la commande pas. Chez un client **FLUX seul**, ce niveau reste
+  vide — conforme à la discipline « le flux tourne complet SANS aucun OF » (§6quinquies A).
+- ⭐ **L'unification se fait par le BAS** : quelle que soit sa nature, une ligne finit en `Mouvement` vers
+  `CLIENT`. C'est le **journal** qui réconcilie tout, **pas un objet parent**.
 - **Colis** = **unité expédiable de 1er plan**, **découplée de la Caisse** : contient soit des **caisses**
   (fabrication) soit des **articles/prestations** (négoce).
-- 🔧 *Legacy* : le négoce était géré par une **caisse virtuelle invisible + ligne de prestation** (hack, car
-  dans l'Uniface tout passait par une caisse). *Moderne* : abstraction propre `Ordre` + `Colis` découplé.
+- ⏳ **`Affaire`/`Dossier`** (un cran AU-DESSUS de la commande : regrouper plusieurs devis/commandes) →
+  **PAS maintenant** (YAGNI). À ajouter le jour où un client réel le demande ; sinon c'est un niveau vide que
+  tout le monde doit traverser — le même piège que la caisse fantôme, dans l'autre sens.
+
+**🔧 Récit legacy → moderne (⭐ argument portfolio)** : en Uniface, **tout passait par une caisse** → le négoce
+était géré par une **caisse virtuelle invisible + ligne de prestation**. Ce n'était **pas absurde** : réutiliser
+la mécanique existante (tarif, éditions, statuts) coûtait des jours là où dupliquer aurait coûté des mois — une
+dette technique au sens propre, un emprunt. Mais les **intérêts** ont été payés : objets vides de sens en base,
+formulaires pleins de champs sans objet, **vocabulaire faux** (« OF » pour une simple revente), et surtout
+**impossibilité de vendre le flux sans la production**. Le diagnostic n'est pas « une aberration de langage »
+mais une **ABSTRACTION MANQUANTE** — le vocabulaire n'a fait que suivre le modèle. ⭐ Fluxo supprime le problème
+à la racine : **il n'y a plus d'objet racine du tout**, seulement des mouvements. Vendre sans fabriquer n'est
+plus « un OF dégénéré », c'est **un mouvement de moins**.
 
 ## 3. Modules
 | Module | Rôle |
@@ -61,7 +84,8 @@ Ordre (flux)                       ← abstraction parente
 ## 6. Modèle de données
 - **Ordonnancement** : voir [`ordonnancement-gpao-model.java`](ordonnancement-gpao-model.java)
   (PosteDeTravail + calendrier, Article/gamme, OF, OperationOF, Indisponibilite, PlanOrdonnancement…).
-- **WMS / flux** : voir [`migration-wms-scoping.md`](migration-wms-scoping.md) (Emplacement, Stock, Mouvement, Réception…).
+- **WMS / flux** : voir [`migration-wms-scoping.md`](migration-wms-scoping.md) (Emplacement, Mouvement, Réception…).
+  ⚠️ Ce doc parle encore d'une table `Stock` : **périmé** — le stock est **DÉRIVÉ** des mouvements (§6ter).
 - **Tarification** : voir [`tarification-model.java`](tarification-model.java) — domaine
   `com.fluxo.commercial` (4ᵉ module de core-metier) : `RegleTarification` (portée client/modèle/article ×
   base M²/poids/volume/unité + **prix exceptionnel/lien** prioritaire), résolution par priorité dans
@@ -70,7 +94,7 @@ Ordre (flux)                       ← abstraction parente
 - **Traçabilité (lot & n° série)** : voir [`tracabilite-model.java`](tracabilite-model.java) — mode de
   suivi porté par l'`Article` (`AUCUN`/`LOT`/`SERIE`), `Lot` / `UniteSerie`, `Mouvement` (journal),
   `LienGenealogie` (rappel ciblé).
-- À étendre : `Ordre` (parent) → `OF Fabrication` / `Ordre Négoce` ; `Colis` (découplé de `Caisse`).
+- À étendre : `CommandeClient` + `LigneCommande` (lignes **hétérogènes**, cf. §2) ; `Colis` (découplé de `Caisse`).
 
 **🧵 Fil directeur — chaîne de traçabilité (le n° lot en colonne vertébrale) :**
 ```
@@ -307,7 +331,8 @@ Frontière : `config_champ` = **paramétrage** (admin client, son schéma) ≠ *
 - **Legacy** : monolithe **Uniface** (GPAO **+** WMS même base), rustines (caisse virtuelle pour négoce),
   éditions Crystal Report, intégration Sage X3.
 - **Moderne** : **Quarkus** (microservices) + **Angular/Flutter** (dashboard) + **PostgreSQL** + **IA**.
-- **Gains** : abstraction propre (`Ordre`), `Colis` découplé, moteur de formules paramétrable, IA, WMS découplé.
+- **Gains** : plus d'objet racine **du tout** (le négoce n'est plus une caisse fantôme, cf. §2), `Colis` découplé,
+  stock **dérivé** au lieu d'un compteur, moteur de formules paramétrable, IA, WMS découplé.
 - **Angle prospection** : « je **modernise** le legacy industriel » = compétence **rare et très demandée** (PME/ETI).
 
 ## 8. Architecture technique
