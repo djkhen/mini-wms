@@ -325,3 +325,83 @@ git pull origin main          ← depuis feature/x
 🧠 **Les 2 sens du merge** :
 - **`main` → ma feature** (`git pull origin main`) = *je me mets à jour / je reste compatible.* **Autant de fois que je veux.**
 - **ma feature → `main`** (PR, ou `git merge --no-ff`) = *je livre.* **Une seule fois, à la fin.**
+
+---
+
+## 🆘 « J'ai oublié `checkout -b` : j'ai commité sur `main` ! » (vécu le 2026-08-07)
+
+**Symptômes** : le prompt Git Bash affiche `(main)` alors que je croyais être sur ma branche, et le push échoue :
+```
+error: src refspec docs/mon-sujet does not match any
+```
+→ traduction : **cette branche n'existe pas**. Mes commits sont sur `main` local.
+
+**La clé** : une branche est une **ÉTIQUETTE posée sur un commit**, pas une copie. Je pose une 2ᵉ étiquette
+ici, puis je **recule** celle de `main`. **Les commits ne bougent jamais.**
+```
+AVANT :   ●──●──● ← main            (origin/main est resté 2 commits en arrière)
+
+APRÈS :   ●──●──● ← docs/mon-sujet
+             ↑
+          main = origin/main
+```
+
+**Les 4 commandes — l'ORDRE fait la sécurité** :
+```
+git checkout -b docs/mon-sujet        ← pose l'étiquette ICI (capture les commits) + s'y déplace
+git push -u origin docs/mon-sujet     ← ⭐ met les commits en SÉCURITÉ sur GitHub AVANT tout reset
+git checkout main
+git reset --hard origin/main          ← recule l'étiquette main à l'état du serveur
+```
+Puis le cycle normal reprend, et le merge crée enfin la bulle :
+```
+git merge --no-ff docs/mon-sujet -m "merge: ..."
+git push
+```
+
+⚠️ **`git reset --hard` est la commande la plus destructrice de git** : elle supprime définitivement les
+modifications **non commitées**. Ne l'utiliser QUE si les **2 conditions** sont réunies :
+1. `git status` **totalement propre** (aucune ligne de fichier) ;
+2. les commits abandonnés sont **récupérables ailleurs** (branche créée **ET** poussée → d'où l'ordre ci-dessus).
+
+**Jamais** sur une branche partagée déjà poussée.
+
+💡 **Après le reset, mes fichiers semblent revenus en arrière → c'est NORMAL**, pas une perte : le répertoire
+de travail **suit la branche**. `main` pointe sur un commit antérieur, donc git réécrit les fichiers en
+conséquence. Le `merge` les ramène instantanément.
+
+🧠 **Prévention** : le prompt Git Bash affiche la branche **entre parenthèses**. Voir `(main)` avant de
+commiter = **STOP, je crée ma branche d'abord**. Et `git checkout -b` **emporte** les modifications en
+cours avec lui : on peut donc créer la branche même après avoir commencé à travailler.
+
+---
+
+## 💥 « Mon commit a SUPPRIMÉ des lignes que je n'ai pas touchées ! » — l'IDE écrase le fichier
+
+**Vécu le 2026-08-07** : un commit affiche `1 file changed, 115 deletions(-)` alors qu'on voulait **ajouter**
+du texte. Le fichier commité était une **version périmée**.
+
+**La cause** : le fichier était **ouvert dans l'IDE** (IntelliJ / VS Code) avec l'ancien contenu **en mémoire**.
+Quand git modifie le fichier sur le disque (`reset`, `checkout`, `merge`) puis que l'IDE sauvegarde — auto-save
+ou Ctrl+S — **l'IDE écrase le disque avec son buffer périmé**. Git commite alors sagement ce qu'il voit.
+
+**Le réflexe qui évite tout** :
+> ⭐ **FERMER (ou recharger) dans l'IDE les fichiers qu'une commande git va modifier.**
+
+**Détecter** — toujours regarder le résumé après un commit :
+```
+1 file changed, 115 deletions(-)     ← ⚠️ QUE des suppressions alors que j'ajoutais ?!
+```
+Et **avant** de commiter, vérifier ce qui part vraiment :
+```
+git diff --stat            (non préparé)   ·   git diff --staged --stat   (préparé)
+```
+
+**Réparer** (sans réécrire l'historique, même si le commit est déjà poussé) :
+```
+git checkout main -- le-fichier.md        ← récupère la BONNE version depuis une autre branche
+   ... on refait les modifs voulues ...
+git commit -m "fix: restaure les lignes ecrasees + ..."
+```
+🧠 `git checkout <branche> -- <fichier>` = **« reprends CE fichier tel qu'il est là-bas »**. Rien n'est jamais
+perdu : chaque version vit dans un commit.
