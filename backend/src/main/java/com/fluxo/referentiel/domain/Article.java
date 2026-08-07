@@ -9,7 +9,9 @@ import jakarta.persistence.Enumerated;
 /**
  * Article — le « QUOI » du référentiel, partagé par TOUS les domaines
  * (flux, gpao, commercial). Volontairement PUR :
- *   - PAS de stock ici (le stock = entité Stock du module flux, par emplacement/lot)
+ *   - PAS de stock ici — et pas ailleurs non plus : le stock n'est stocké NULLE PART,
+ *     il se CALCULE (Σ des Mouvements, cf. Mouvement.stockPhysique). Ne jamais ajouter
+ *     de champ `quantite` mutable ici : ce serait le compteur, donc l'anti-pattern (§3).
  *   - PAS de prix ici (la tarification = domaine commercial, RegleTarification)
  */
 @Entity

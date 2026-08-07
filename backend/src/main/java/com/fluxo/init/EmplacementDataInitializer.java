@@ -9,6 +9,8 @@ import jakarta.enterprise.event.Observes;
 import jakarta.transaction.Transactional;
 import org.jboss.logging.Logger;
 
+import java.util.List;
+
 /**
  * Insère quelques emplacements de démonstration au démarrage, uniquement si la
  * table est vide (DONNÉES FICTIVES). Regroupé avec les autres seeds dans le
@@ -16,6 +18,11 @@ import org.jboss.logging.Logger;
  *
  * Les emplacements couvrent les différents types (quai, réception, stockage,
  * tri, expédition) pour pouvoir tester filtres et flux dès la première démo.
+ *
+ * ⚠️ On ne teste PAS `count() == 0` : la table n'est jamais vide, car les 5 emplacements
+ * VIRTUELS (FOURNISSEUR, CLIENT, PRODUCTION, PERTE, INVENTAIRE) y sont créés par la
+ * migration 006 — ce sont des données structurelles, pas de la démo. On compte donc
+ * uniquement les emplacements PHYSIQUES, les seuls qui relèvent du jeu de démonstration.
  */
 @ApplicationScoped
 public class EmplacementDataInitializer {
@@ -24,8 +31,12 @@ public class EmplacementDataInitializer {
 
     @Transactional
     void onStart(@Observes StartupEvent ev) {
-        if (Emplacement.count() == 0) {
-            LOG.info("Table emplacements vide : insertion des emplacements de démonstration.");
+        long physiques = Emplacement.count("type in ?1", List.of(
+                TypeEmplacement.QUAI, TypeEmplacement.RECEPTION, TypeEmplacement.STOCKAGE,
+                TypeEmplacement.TRI, TypeEmplacement.EXPEDITION));
+
+        if (physiques == 0) {
+            LOG.info("Aucun emplacement physique : insertion des emplacements de démonstration.");
             creer("QUAI-01", "Quai de réception 1", TypeEmplacement.QUAI, "QUAI", null, null, null);
             creer("REC-A-01", "Zone réception A", TypeEmplacement.RECEPTION, "A", "01", null, null);
             creer("A-01-01-1", "Rack A allée 1 travée 1 niveau 1", TypeEmplacement.STOCKAGE, "A", "01", "01", "1");
@@ -34,7 +45,7 @@ public class EmplacementDataInitializer {
             creer("TRI-01", "Zone de tri qualité", TypeEmplacement.TRI, "TRI", null, null, null);
             creer("EXP-01", "Zone d'expédition", TypeEmplacement.EXPEDITION, "EXP", null, null, null);
         } else {
-            LOG.infof("Table emplacements déjà peuplée (%d emplacements), pas d'insertion.", Emplacement.count());
+            LOG.infof("Emplacements physiques déjà présents (%d), pas d'insertion.", physiques);
         }
     }
 

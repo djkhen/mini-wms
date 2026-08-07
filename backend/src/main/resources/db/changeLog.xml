@@ -10,4 +10,6 @@
     <include file="db/changes/002-creation-article.sql"/>
     <include file="db/changes/003-creation-tiers.sql"/>
     <include file="db/changes/004-ajout-champs-custom-tiers.sql"/>
+    <include file="db/changes/005-creation-mouvement.sql"/>
+    <include file="db/changes/006-emplacements-virtuels.sql"/>
 </databaseChangeLog>
