@@ -32,7 +32,8 @@ public record MouvementDto(
         String origineType,
         Long origineId) {
 
-    static MouvementDto de(Mouvement m) {
+    /** PUBLIC : la Réception s'en sert pour renvoyer les mouvements qu'elle a générés. */
+    public static MouvementDto de(Mouvement m) {
         return new MouvementDto(
                 m.id,
                 m.article.reference,

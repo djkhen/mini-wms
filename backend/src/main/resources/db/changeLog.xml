@@ -12,4 +12,5 @@
     <include file="db/changes/004-ajout-champs-custom-tiers.sql"/>
     <include file="db/changes/005-creation-mouvement.sql"/>
     <include file="db/changes/006-emplacements-virtuels.sql"/>
+    <include file="db/changes/007-creation-reception.sql"/>
 </databaseChangeLog>
